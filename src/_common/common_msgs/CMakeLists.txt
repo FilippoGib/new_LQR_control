@@ -24,8 +24,8 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/RaceStatus.msg"
-  # Add custom msg dependecies to standard ROS2 msgs
-  DEPENDENCIES std_msgs
+  "msg/NavSatHeading.msg"
+  DEPENDENCIES std_msgs sensor_msgs
  )
 
 ament_export_dependencies(rosidl_default_runtime)
