@@ -3,4 +3,4 @@ This file contains some useful terms used frequently in the workshop and during 
 
 ## Car Design vocabulary
 
-## Infi vocabulary:
+## Infi vocabulary
