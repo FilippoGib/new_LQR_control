@@ -13,8 +13,12 @@ AGX Orin, 64GB
 
 # Software
 TODO: rifare sta roba, fa schifo e l'ho usata come placeholder
-## Layers
 
+## System specifications
+- [ROS2 Humble](https://docs.ros.org/en/humble/index.html)
+- [Jetson 6](https://developer.nvidia.com/embedded/jetpack-sdk-60) (based on ubuntu 22)
+
+## Layers
 ### 0. Sensors
 - Sensor drivers
 - Communication protocols
