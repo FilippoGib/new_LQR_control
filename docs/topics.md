@@ -3,7 +3,7 @@
 ### Sensors
 
 ```
-/mti680G/gps/gnss               common_msgsmsg::NavSatHeading
+/mti680G/gps/gnss               sensor_msgs/msg/NavSatFix
 /mti680G/imu/data               sensor_msgs/msg/Imu
 /ouster/lidar/pointcloud        sensor_msgs/msg/PointCloud2
 /ouster/imu/data                sensor_msgs/msg/Imu
