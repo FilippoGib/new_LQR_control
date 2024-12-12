@@ -27,10 +27,10 @@ DriverGPS::DriverGPS() : Node("driver_gps_node")
 	auto qos = rclcpp::QoS(rclcpp::KeepLast(1), rmw_qos_profile_sensor_data);
 
     /* Create GPS position publisher */
-    this->gps_position_pub = this->create_publisher<common_msgs::msg::NavSatHeading>("/gps/data", qos);
+    this->gps_position_pub = this->create_publisher<common_msgs::msg::NavSatHeading>("/emlid/gps/data", qos);
 
     /* Create GPS speed publisher */
-    this->gps_speed_pub = this->create_publisher<std_msgs::msg::Float64>("/speed/gps", 10);
+    this->gps_speed_pub = this->create_publisher<std_msgs::msg::Float64>("/emlid/gps/speed", 10);
 
 
 
