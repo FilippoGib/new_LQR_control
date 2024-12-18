@@ -63,7 +63,6 @@ std::string to_string_with_precision(const T a_value, const int n = 6)
 
 // Boost
 #include <boost/format.hpp>
-#include <boost/make_shared.hpp>
 #include <boost/circular_buffer.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/range/adaptor/indexed.hpp>
@@ -76,6 +75,7 @@ std::string to_string_with_precision(const T a_value, const int n = 6)
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/io/pcd_io.h>
+#include <pcl/registration/icp.h>
 
 namespace fast_limo {
   enum class SensorType { OUSTER, VELODYNE, HESAI, LIVOX, UNKNOWN };
@@ -83,6 +83,7 @@ namespace fast_limo {
     // MODULES
   class Localizer;
   class Mapper;
+  class Looper;
 
     // OBJECTS
   class State;
@@ -91,6 +92,8 @@ namespace fast_limo {
 
     // UTILS
   struct Config;
+  struct LoopConfig;
+  struct GNSStf;
 
     // STRUCTURES
   struct Point {

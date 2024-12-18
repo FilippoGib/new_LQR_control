@@ -24,7 +24,20 @@ def generate_launch_description():
         parameters=[PathJoinSubstitution([
                 FindPackageShare('fast_limo'),
                 'config',
-                'params.yaml'
+                'localizer.yaml'
+            ])]
+    )
+
+    limo_node_loop = Node(
+        package='fast_limo',
+        namespace='',
+        executable='fast_limo_loop_exec',
+        name='fast_limo_loop_closure',
+        output='screen',
+        parameters=[PathJoinSubstitution([
+                FindPackageShare('fast_limo'),
+                'config',
+                'looper.yaml'
             ])]
     )
 
@@ -50,5 +63,6 @@ def generate_launch_description():
     return LaunchDescription([
         rviz_config_arg,
         limo_node,
+        limo_node_loop,
         rviz_conditioned
     ])

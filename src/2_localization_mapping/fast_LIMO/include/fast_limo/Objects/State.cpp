@@ -73,6 +73,18 @@
             this->p = T.block(0, 3, 3, 1);
         }
 
+        fast_limo::State::State(Eigen::Matrix4d& Td){
+
+            Eigen::Matrix4f T = Td.cast<float>();
+
+            // Get rotation matrix
+            Eigen::Matrix3f R = T.block(0, 0, 3, 3);
+            this->q = R;
+            
+            // Get translation vector
+            this->p = T.block(0, 3, 3, 1);
+        }
+
         void fast_limo::State::update(double t){
 
                 // R ⊞ (w - bw - nw)*dt

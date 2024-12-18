@@ -24,6 +24,7 @@
 #include "fast_limo/Common.hpp"
 #include "fast_limo/Modules/Localizer.hpp"
 #include "fast_limo/Modules/Mapper.hpp"
+#include "fast_limo/Modules/Looper.hpp"
 
 // ROS
 #include "rclcpp/rclcpp.hpp"

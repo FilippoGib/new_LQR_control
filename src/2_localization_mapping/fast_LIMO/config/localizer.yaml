@@ -27,7 +27,7 @@ fast_limo:
       gravity_align: true     # estimate gravity vector
       accel: true             # estimate lin. accel. bias
       gyro: true              # estimate ang. vel. bias
-      time: 3.0               # [s] time to estimate (during this time, the robot must be at stand still)
+      time: 1.0               # [s] time to estimate (during this time, the robot must be at stand still)
 
     extrinsics: # w.r.t baselink [SI]
       imu:
