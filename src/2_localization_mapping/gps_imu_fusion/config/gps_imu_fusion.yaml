@@ -1,0 +1,25 @@
+/gps_imu_fusion_node:
+  ros__parameters:
+    generic:
+      imu_topic: "/imu/data"
+      gps_topic: "/emlid/gps/data"
+      cones_topic: "/perception/cones"
+      output_odom_topic: "/gps_imu_fusion/odom"
+      enable_logging: false
+      tf_required_topics: 0
+
+    frequency:
+      imu_fs: 100
+      gps_fs: 10
+
+    noises:
+      zero_velocity_constraint_noise: 0.01
+      gyro_noise: [3.0e-2, 3.0e-2, 3.0e-2]
+      gyro_bias_noise: [0.00000000000004, 0.00000000000004, 0.00000000000004]
+      accel_noise: [4.8e-2, 4.8e-2, 4.8e-2]
+      accel_bias_noise: [0.0000000004, 0.0000000004, 0.0000000004]
+      r_vel: 0.00
+      r_pos: 0.00002
+      gyroscope_bias_decay_factor: 1.0
+      accel_bias_decay_factor: 1.0
+      gps_acc_unc: 0.08
