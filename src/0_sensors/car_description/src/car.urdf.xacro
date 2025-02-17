@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="bud">
+    <xacro:include filename="$(find car_description)/urdf/materials.urdf.xacro" />
+    <xacro:include filename="$(find car_description)/urdf/base/chassis.urdf.xacro" />
+    <xacro:include filename="$(find car_description)/urdf/sensors/camera_s.urdf.xacro" /> 
+    <xacro:include filename="$(find car_description)/urdf/sensors/lidar.urdf.xacro" />
+    <xacro:include filename="$(find car_description)/urdf/sensors/imu.urdf.xacro" />
+     <!--Vehicle mesures-->
+    <xacro:property name="length" value="2.5"/>
+    <xacro:property name="width" value="0.45"/>
+    <xacro:property name="height" value="1.45"/>
+    <xacro:property name="height_from_ground" value="0.05"/>
+     <!--Camera support mesures-->
+    <xacro:property name="camera_s_length" value="0.15"/>
+    <xacro:property name="camera_s_width" value="0.05"/>
+    <xacro:property name="camera_s_height" value="0.05"/>   
+    <!--Camera mesures-->
+    <xacro:property name="camera_lenght" value="0.06"/>
+    <!--Lidar mesures mesures-->
+    <xacro:property name="lidar_height" value="0.15"/>
+    <xacro:property name="lidar_radius" value="0.05"/>
+    <xacro:property name="lidar_height_from_ground" value="1.2s"/>   <!-- retrieve true data from CAD-->
+    <xacro:property name="imu_height_from_ground" value="0.0"/> <!-- retrieve true data from CAD-->
+
+
+    <!-- imu -->
+    <xacro:car_imu name="imu" >
+        <origin xyz="0.0 0.0 ${imu_height_from_ground}" 
+                rpy="0.0 0.0 0.0"/>
+    </xacro:car_imu> 
+    <!-- base -->
+    <xacro:car_chassie name="chassis" parent="vehicle">
+        <origin xyz="-1.62 0 ${lidar_height_from_ground}"/> 
+    </xacro:car_chassie>
+    <!-- camera_s   -->
+    <xacro:car_camera_s name="camera_s" parent="chassis_link">
+        <origin xyz="0.0 0.0 1.0" 
+                rpy="0.0 0.0 0.0"/> 
+    </xacro:car_camera_s>
+    <!-- lidar -->
+    <xacro:car_lidar name="velodyne" parent="chassis_link">
+        <origin xyz="1.62 0 ${lidar_height_from_ground}"
+        	rpy="0 0.14 0" /> 
+    </xacro:car_lidar>
+    <!-- imu -->
+    <!-- <xacro:car_imu name="imu" parent="chassis_link">
+        <origin xyz="1.62 0 ${lidar_height_from_ground}"/> 
+    </xacro:car_imu> -->
+</robot>
+<!-- TODO: Add rear and front axes and change their reference in the code-->
