@@ -15,8 +15,8 @@ GpsImuFusion::GpsImuFusion() : rclcpp::Node("gps_imu_fusion_node")
     this->cones_sub = this->create_subscription<visualization_msgs::msg::Marker>(
         this->cones_topic, 1, std::bind(&GpsImuFusion::conesCallback, this, std::placeholders::_1));
 
-    this->gps_sub = this->create_subscription<sensor_msgs::msg::NavSatFix>(
-        this->gps_topic, 1, std::bind(&GpsImuFusion::gpsDataCallback, this, std::placeholders::_1));
+    this->gps_sub = this->create_subscription<common_msgs::msg::NavSatHeading>(
+        this->gps_topic, qos, std::bind(&GpsImuFusion::gpsDataCallback, this, std::placeholders::_1));
 
     /* Create EKF Filter */
     this->gndFusion = new InsFilterNonHolonomic();
@@ -59,10 +59,10 @@ void GpsImuFusion::loadParameters()
     declare_parameter("frequency.gps_fs", 10);
 
     /* Declare Sensor Noise parameters */
-    declare_parameter("noises.gyro_noise", {});
-    declare_parameter("noises.gyro_bias_noise", {});
-    declare_parameter("noises.accel_noise", {});
-    declare_parameter("noises.accel_bias_noise", {});
+    declare_parameter("noises.gyro_noise", std::vector<double>{0.0, 0.0, 0.0});
+    declare_parameter("noises.gyro_bias_noise", std::vector<double>{0.0, 0.0, 0.0});
+    declare_parameter("noises.accel_noise", std::vector<double>{0.0, 0.0, 0.0});
+    declare_parameter("noises.accel_bias_noise", std::vector<double>{0.0, 0.0, 0.0});
     declare_parameter("noises.zero_velocity_constraint_noise", 1e-3);
     declare_parameter("noises.r_vel", 0.0);
     declare_parameter("noises.r_pos", 0.005);
@@ -201,15 +201,15 @@ void GpsImuFusion::imuDataCallback(const sensor_msgs::msg::Imu::SharedPtr imu_da
     }
 }
 
-void GpsImuFusion::gpsDataCallback(const sensor_msgs::msg::NavSatFix::SharedPtr data)
+void GpsImuFusion::gpsDataCallback(const common_msgs::msg::NavSatHeading::SharedPtr data)
 {
     rclcpp::Time start, end;
     start = this->now();
 
     /* Retrieve LLA */
-    double latitude = data->latitude;
-    double longitude = data->longitude;
-    double altitude = data->altitude;
+    double latitude = data->gps_data.latitude;
+    double longitude = data->gps_data.longitude;
+    double altitude = data->gps_data.altitude;
 
     Vector3d lla = Vector3d(latitude, longitude, altitude);
     Vector3d velocities;

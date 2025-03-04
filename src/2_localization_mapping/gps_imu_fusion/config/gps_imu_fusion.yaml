@@ -2,7 +2,7 @@
   ros__parameters:
     generic:
       imu_topic: "/imu/data"
-      gps_topic: "/emlid/gps/data"
+      gps_topic: "/gps/data"
       cones_topic: "/perception/cones"
       output_odom_topic: "/gps_imu_fusion/odom"
       enable_logging: false

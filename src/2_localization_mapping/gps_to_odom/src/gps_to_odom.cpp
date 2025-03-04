@@ -3,6 +3,7 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include <common_msgs/msg/nav_sat_heading.hpp>
 #include <tf2_ros/transform_broadcaster.h>
+#include <tf2/LinearMath/Quaternion.h>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <vector>
 
@@ -23,6 +24,8 @@ public:
         auto qos = rclcpp::QoS(rclcpp::KeepLast(1), rmw_qos_profile_sensor_data);
         gps_sub_ = this->create_subscription<common_msgs::msg::NavSatHeading>(
             gps_topic_, qos, std::bind(&GpsToOdom::gpsCallback, this, std::placeholders::_1));
+        gps_sub_normal = this->create_subscription<sensor_msgs::msg::NavSatFix>(
+            "/fix", qos, std::bind(&GpsToOdom::gpsCallback_normal, this, std::placeholders::_1));
         odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>(odom_topic_, 10);
 
         tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(this);
@@ -57,6 +60,82 @@ private:
         double x = delta_lon * 111320.0 * cos(origin_latitude_ * M_PI / 180.0);
         double y = delta_lat * 110540.0;
 
+        // calculate yaw using previous and current GPS data
+        double yaw = 0.0;
+        // if (count_ > 0)
+        // {
+        //     auto prev_msg = full_msg->prev_gps_data;
+        //     double prev_delta_lat = prev_msg.latitude - origin_latitude_;
+        //     double prev_delta_lon = prev_msg.longitude - origin_longitude_;
+        //     yaw = atan2(delta_lat - prev_delta_lat, delta_lon - prev_delta_lon);
+        // }
+        
+
+        auto odom_msg = nav_msgs::msg::Odometry();
+        odom_msg.header.stamp = this->now();
+        odom_msg.header.frame_id = "odom";
+        odom_msg.child_frame_id = "base_link";
+        odom_msg.pose.pose.position.x = x;
+        odom_msg.pose.pose.position.y = y;
+        odom_msg.pose.pose.position.z = 0.0;
+
+        odom_pub_->publish(odom_msg);
+
+        // Broadcast the transform
+        geometry_msgs::msg::TransformStamped transformStamped;
+        transformStamped.header.stamp = this->now();
+        transformStamped.header.frame_id = "world";
+        transformStamped.child_frame_id = "odom";
+        transformStamped.transform.translation.x = x;
+        transformStamped.transform.translation.y = y;
+        transformStamped.transform.translation.z = 0.0;
+        transformStamped.transform.rotation.x = 0.0;
+        transformStamped.transform.rotation.y = 0.0;
+        transformStamped.transform.rotation.z = 0.0;
+        transformStamped.transform.rotation.w = 1.0;
+
+        tf_broadcaster_->sendTransform(transformStamped);
+    }
+
+    void gpsCallback_normal(const sensor_msgs::msg::NavSatFix::SharedPtr full_msg)
+    {
+        auto msg = full_msg;
+        if (!calibrated_)
+        {
+            if (count_ < calib_count_)
+            {
+                origin_latitudes_.push_back(msg->latitude);
+                origin_longitudes_.push_back(msg->longitude);
+                count_++;
+                if (count_ == calib_count_)
+                {
+                    origin_latitude_ = std::accumulate(origin_latitudes_.begin(), origin_latitudes_.end(), 0.0) / origin_latitudes_.size();
+                    origin_longitude_ = std::accumulate(origin_longitudes_.begin(), origin_longitudes_.end(), 0.0) / origin_longitudes_.size();
+                    calibrated_ = true;
+                    RCLCPP_INFO(this->get_logger(), "Calibration complete: Origin set.");
+                }
+                return;
+            }
+        }
+
+        double delta_lat = msg->latitude - origin_latitude_;
+        double delta_lon = msg->longitude - origin_longitude_;
+
+        // Simple conversion from degrees to meters (approximation)
+        double x = delta_lon * 111320.0 * cos(origin_latitude_ * M_PI / 180.0);
+        double y = delta_lat * 110540.0;
+
+        // calculate yaw using previous and current GPS data
+        double yaw = 0.0;
+        // if (count_ > 0)
+        // {
+        //     // auto prev_msg = full_msg->prev_gps_data;
+        //     double prev_delta_lat = prev_msg.latitude - origin_latitude_;
+        //     double prev_delta_lon = prev_msg.longitude - origin_longitude_;
+        //     yaw = atan2(delta_lat - prev_delta_lat, delta_lon - prev_delta_lon);
+        // }
+        
+
         auto odom_msg = nav_msgs::msg::Odometry();
         odom_msg.header.stamp = this->now();
         odom_msg.header.frame_id = "odom";
@@ -87,6 +166,7 @@ private:
     std::string odom_topic_;
 
     rclcpp::Subscription<common_msgs::msg::NavSatHeading>::SharedPtr gps_sub_;
+    rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr gps_sub_normal;
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
     std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
 

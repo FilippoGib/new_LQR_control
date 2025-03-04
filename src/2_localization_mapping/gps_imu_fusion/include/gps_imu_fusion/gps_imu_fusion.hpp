@@ -12,6 +12,7 @@
 #include "tf2_ros/transform_broadcaster.h"
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <nav_msgs/msg/odometry.hpp>
+#include <common_msgs/msg/nav_sat_heading.hpp>
 
 #include <InsFilterNonHolonomic.hpp>
 
@@ -91,7 +92,7 @@ private:
     rclcpp::Subscription<visualization_msgs::msg::Marker>::SharedPtr cones_sub;
 
     /* GPS data subscriber */
-    rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr gps_sub;
+    rclcpp::Subscription<common_msgs::msg::NavSatHeading>::SharedPtr gps_sub;
 
     /* TF2 broadcaster */
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
@@ -114,7 +115,7 @@ private:
     /**
      * GPS data callback
     */
-    void gpsDataCallback(const sensor_msgs::msg::NavSatFix::SharedPtr gps_data);
+    void gpsDataCallback(const common_msgs::msg::NavSatHeading::SharedPtr gps_data);
 
     /**
      * Measure distance between two GPS messages
