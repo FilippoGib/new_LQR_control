@@ -100,18 +100,25 @@ private:
         odom_msg.twist.covariance[35] = 0.1; // yaw
 
         odom_pub_->publish(odom_msg);
-
         // DEBUG: TODO, REMOVE!
         // publish odom with random gaussian noise
-        random_noise_speed(odom_msg);
+        static uint32_t seq = 0;
+        random_noise_speed(odom_msg, seq);
+        seq++;
     }
 
-    void random_noise_speed(nav_msgs::msg::Odometry& source) {
+    void random_noise_speed(nav_msgs::msg::Odometry& source, uint32_t& seq) {
         nav_msgs::msg::Odometry noise_odom;
         noise_odom.header.stamp = this->now();
         noise_odom.header.frame_id = "odom";
         noise_odom.child_frame_id = "base_link";
-        noise_odom.twist.twist.linear.x = source.twist.twist.linear.x + 0.1 * (rand() % 100) / 100.0 - 0.05;
+        if (seq >= 300)
+        {// add 20% noise to the speed
+            noise_odom.twist.twist.linear.x = source.twist.twist.linear.x + source.twist.twist.linear.x * 0.3;
+            seq = 0;
+        }
+        else // add random gaussian noise
+            noise_odom.twist.twist.linear.x = source.twist.twist.linear.x + 0.01 * (rand() % 100 - 50);
         noise_odom.twist.covariance[0] = 0.1;  // x velocity covariance
         noise_odom.twist.covariance[7] = 0.1;  // y velocity covariance
         noise_odom.twist.covariance[14] = 0.1; // z velocity covariance
