@@ -64,6 +64,9 @@ class DriverGPS : public rclcpp::Node
     /* GPS speed publisher, default double 64bit (mps) */
     rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr gps_speed_pub;
 
+    /* NavSatFix publisher */
+    rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr navsatfix_pub;
+
     /**
      * Compute Azimuth between two points
     */

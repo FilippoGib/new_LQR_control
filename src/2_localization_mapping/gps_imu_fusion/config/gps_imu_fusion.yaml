@@ -6,7 +6,7 @@
       cones_topic: "/perception/cones"
       output_odom_topic: "/gps_imu_fusion/odom"
       enable_logging: false
-      tf_required_topics: 0
+      tf_required_topics: 5
 
     frequency:
       imu_fs: 100

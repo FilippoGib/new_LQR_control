@@ -202,7 +202,7 @@
         #This is necessary if you have hig output rate, and if you see error message of 'data overflow' 
         enable_setting_baudrate: false
         #options: 115200, 230400, 460800, 921600, 2000000
-        set_baudrate_value: 921600
+        set_baudrate_value: 230400
 
 
         # Manual Gyro Bias Estimation (MGBE) Configuration
@@ -210,7 +210,7 @@
 
         # Enable or disable manual gyro bias estimation.
         # If enabled, specify the 'event_interval' and 'duration' in 'manual_gyro_bias_param'.
-        enable_manual_gyro_bias: false
+        enable_manual_gyro_bias: true
 
         # Parameters for manual gyro bias estimation:
         # - 'event_interval': Time in seconds between two consecutive invocations.

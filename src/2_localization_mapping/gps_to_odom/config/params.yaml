@@ -1,7 +1,8 @@
 /gps_to_odom_node:
   ros__parameters:
     topics:
-      gps_data: "/gnss"
+      gps_data: "/emlid/navsatfix"
+      imu: "/mti680G/imu/data"
       output_odom: "/odom/gps"
     calibration:
       count: 10

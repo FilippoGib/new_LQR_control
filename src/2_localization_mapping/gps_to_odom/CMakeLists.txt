@@ -12,15 +12,14 @@ find_package(sensor_msgs REQUIRED)
 find_package(common_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
-# # Targeting ROS2 dependencies
-# ament_target_dependencies(gps_visualizer
-#   rclcpp
-#   sensor_msgs
-#   common_msgs
-# )
+include_directories(include)
 
-add_executable(gps_to_odom_node src/gps_to_odom.cpp)
+add_executable(gps_to_odom_node 
+  src/gps_to_odom_node.cpp
+  src/gps_to_odom.cpp
+  )
 
 ament_target_dependencies(gps_to_odom_node
   rclcpp
@@ -28,6 +27,7 @@ ament_target_dependencies(gps_to_odom_node
   common_msgs
   nav_msgs
   tf2_ros
+  tf2_geometry_msgs
 )
 
 install(TARGETS

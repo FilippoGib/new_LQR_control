@@ -32,10 +32,10 @@ DriverGPS::DriverGPS() : Node("driver_gps_node")
     /* Create GPS speed publisher */
     this->gps_speed_pub = this->create_publisher<std_msgs::msg::Float64>("/emlid/gps/speed", 10);
 
-
+    this->navsatfix_pub = this->create_publisher<sensor_msgs::msg::NavSatFix>("/emlid/navsatfix", qos);
 
     /* Start to monitor GPS data. We're using a thread in order to NOT block the node. */
-    this-> gpsDataMonitorThread = new std::thread([this]()
+    this->gpsDataMonitorThread = new std::thread([this]()
         {
             monitorGPSData();
         } 
@@ -133,6 +133,17 @@ void DriverGPS::publishData()
     
         this->gps_speed_pub->publish(gps_speed);
         this->gps_position_pub->publish(navsat_heading_msg);
+
+        sensor_msgs::msg::NavSatFix navsatfix_msg;
+        navsatfix_msg.header.stamp = this->now();
+        navsatfix_msg.header.frame_id = "imu_link";
+        navsatfix_msg.status = navsat_status;
+        navsatfix_msg.latitude = gps_data.fix.latitude;
+        navsatfix_msg.longitude = gps_data.fix.longitude;
+        navsatfix_msg.altitude = gps_data.fix.altitude;
+        navsatfix_msg.position_covariance_type = sensor_msgs::msg::NavSatFix::COVARIANCE_TYPE_UNKNOWN;
+
+        this->navsatfix_pub->publish(navsatfix_msg);
 
     }
 }

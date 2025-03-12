@@ -198,6 +198,8 @@ void GpsImuFusion::imuDataCallback(const sensor_msgs::msg::Imu::SharedPtr imu_da
 
         /* Publish TF */
         this->updateTf(act_position, q, imu_data->header.stamp);
+
+        RCLCPP_INFO(this->get_logger(), "UPDATED TF");
     }
 }
 
@@ -294,18 +296,18 @@ void GpsImuFusion::gpsDataCallback(const common_msgs::msg::NavSatHeading::Shared
         this->globalToLocalFrame(q, act_position, act_orientation);
 
         /* Publish TF */
-        // this->updateTf(act_position, q, data->header.stamp);
+        this->updateTf(act_position, q, data->header.stamp);
     }
 }
 
 /* ***** END CALLBACKS ***** */
 void GpsImuFusion::updateTf(Vector3d p, tf2::Quaternion q, rclcpp::Time timestamp)
 {
-    if (!this->enable_tf)
-    {
-        RCLCPP_INFO(this->get_logger(), "No cones -> Not publishing TF.");
-        return;
-    }
+    // if (!this->enable_tf)
+    // {
+    //     RCLCPP_INFO(this->get_logger(), "No cones -> Not publishing TF.");
+    //     return;
+    // }
     geometry_msgs::msg::TransformStamped t;
     nav_msgs::msg::Odometry odom;
 
