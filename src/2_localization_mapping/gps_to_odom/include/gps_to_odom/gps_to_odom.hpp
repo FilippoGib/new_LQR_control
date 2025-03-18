@@ -38,6 +38,7 @@ private:
     std::vector<double> origin_latitudes_;
     std::vector<double> origin_longitudes_;
     double roll, pitch, yaw;
+    double position_rotation, yaw_rotation;
 };
 
 #endif

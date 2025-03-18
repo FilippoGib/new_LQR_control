@@ -6,3 +6,6 @@
       output_odom: "/odom/gps"
     calibration:
       count: 10
+    correction:
+      position_rotation: -2.515 # rad
+      yaw_rotation: -1.600 # rad

@@ -4,8 +4,8 @@ fast_limo:
   ros__parameters:
     topics:
       input:
-        lidar: /ouster/points
-        imu: /ouster/imu
+        lidar: /velodyne_points
+        imu: /mti680G/imu/data
       # output:
 
     frames: # output frames (the transform between frames will be broadcasted)

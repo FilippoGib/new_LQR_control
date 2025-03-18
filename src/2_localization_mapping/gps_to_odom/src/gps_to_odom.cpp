@@ -18,11 +18,17 @@ GpsToOdom::GpsToOdom()
 {
     this->declare_parameter("topics.gps_data", "gps/fix");
     this->declare_parameter("topics.output_odom", "odom/gps");
-    declare_parameter("calibration.count", 10);
+    this->declare_parameter("calibration.count", 10);
+    this->declare_parameter("topics.imu", "/imu/data");
+    this->declare_parameter("correction.position_rotation", 0.0);
+    this->declare_parameter("correction.yaw_rotation", 0.0);
+
     this->get_parameter("topics.gps_data", gps_topic_);
     this->get_parameter("topics.imu", imu_topic_);
     this->get_parameter("topics.output_odom", odom_topic_);
     this->get_parameter("calibration.count", calib_count_);
+    this->get_parameter("correction.position_rotation", position_rotation);
+    this->get_parameter("correction.yaw_rotation", yaw_rotation);
 
     // qos best effort
     auto qos = rclcpp::QoS(rclcpp::KeepLast(1), rmw_qos_profile_sensor_data);
@@ -42,22 +48,6 @@ void GpsToOdom::imuCallback(const sensor_msgs::msg::Imu imu_data)
     tf2::Quaternion quat;
     tf2::fromMsg(imu_data.orientation, quat);
     tf2::Matrix3x3(quat).getRPY(roll, pitch, yaw);
-
-    auto odom_msg = nav_msgs::msg::Odometry();
-    odom_msg.header.stamp = this->now();
-    odom_msg.header.frame_id = "track";
-    odom_msg.child_frame_id = "base_link";
-    odom_msg.pose.pose.position.x = 0.0;
-    odom_msg.pose.pose.position.y = 0.0;
-    odom_msg.pose.pose.position.z = 0.0;
-    odom_msg.pose.pose.orientation.x = quat.x();
-    odom_msg.pose.pose.orientation.y = quat.y();
-    odom_msg.pose.pose.orientation.z = quat.z();
-    odom_msg.pose.pose.orientation.w = quat.w();
-
-
-    odom_pub_->publish(odom_msg);
-    RCLCPP_INFO(this->get_logger(), "IMU Callback: Yaw: %f", yaw);
 }
 
 void GpsToOdom::gpsCallback_normal(const sensor_msgs::msg::NavSatFix::SharedPtr full_msg)
@@ -90,10 +80,19 @@ void GpsToOdom::gpsCallback_normal(const sensor_msgs::msg::NavSatFix::SharedPtr 
     double x = delta_lon * 111320.0 * cos(origin_latitude_ * M_PI / 180.0);
     double y = delta_lat * 110540.0;
 
-    double x_new = cos(initial_yaw_) * x - sin(initial_yaw_) * y;
-    double y_new = sin(initial_yaw_) * x + cos(initial_yaw_) * y;
+    double corrected_x = cos(position_rotation) * x - sin(position_rotation) * y;
+    double corrected_y = sin(position_rotation) * x + cos(position_rotation) * y;
 
-    yaw += initial_yaw_;
+    x = corrected_x;
+    y = corrected_y;
+
+    // double x_new = cos(initial_yaw_) * x - sin(initial_yaw_) * y;
+    // double y_new = sin(initial_yaw_) * x + cos(initial_yaw_) * y;
+
+    // yaw += initial_yaw_;
+    // yaw = normalizeAngle(yaw);
+
+    yaw += yaw_rotation;
     yaw = normalizeAngle(yaw);
 
     tf2::Quaternion quat;
@@ -101,10 +100,10 @@ void GpsToOdom::gpsCallback_normal(const sensor_msgs::msg::NavSatFix::SharedPtr 
 
     auto odom_msg = nav_msgs::msg::Odometry();
     odom_msg.header.stamp = this->now();
-    odom_msg.header.frame_id = "track";
+    odom_msg.header.frame_id = "map";
     odom_msg.child_frame_id = "base_link";
-    odom_msg.pose.pose.position.x = x_new;
-    odom_msg.pose.pose.position.y = y_new;
+    odom_msg.pose.pose.position.x = corrected_x;
+    odom_msg.pose.pose.position.y = corrected_y;
     odom_msg.pose.pose.position.z = 0.0;
     odom_msg.pose.pose.orientation.x = quat.x();
     odom_msg.pose.pose.orientation.y = quat.y();
