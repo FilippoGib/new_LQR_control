@@ -136,12 +136,17 @@ void DriverGPS::publishData()
 
         sensor_msgs::msg::NavSatFix navsatfix_msg;
         navsatfix_msg.header.stamp = this->now();
-        navsatfix_msg.header.frame_id = "imu_link";
+        navsatfix_msg.header.frame_id = "gps_link";
         navsatfix_msg.status = navsat_status;
         navsatfix_msg.latitude = gps_data.fix.latitude;
         navsatfix_msg.longitude = gps_data.fix.longitude;
         navsatfix_msg.altitude = gps_data.fix.altitude;
         navsatfix_msg.position_covariance_type = sensor_msgs::msg::NavSatFix::COVARIANCE_TYPE_UNKNOWN;
+
+        // Add covariance matrix
+        navsatfix_msg.position_covariance[0] = 0.1; // Variance in latitude
+        navsatfix_msg.position_covariance[4] = 0.1; // Variance in longitude
+        navsatfix_msg.position_covariance[8] = 0.1; // Variance in altitude
 
         this->navsatfix_pub->publish(navsatfix_msg);
 
