@@ -1,0 +1,36 @@
+local_planner:
+    ros__parameters:
+        node/eventType: "autocross"  # Possible values: "acceleration" "autocross" "skidpad"
+        node/topicBorders: "planning/borders"
+        node/topicCenterLine: "planning/center_line"
+        node/topicBordersCompleted: "planning/borders_completed"
+        node/topicCenterLineCompleted: "planning/center_line_completed"
+        node/topicRaceStatus: "planning/race_status"
+        node/topicOdometry: "Odometry"
+        node/topicSlamCones: "slam/cones_positions"
+
+        acceleration/lineWidth: 0.1
+
+        autocross/clusterDistance: 81.0
+        autocross/conesDistance: 81.0
+        autocross/firstConesSize: 10
+        autocross/firstConesStart: 11
+        autocross/diffColorConesDistance: 1.0
+        autocross/diffColorConesSize: 6
+        autocross/trackWidth: 49.0
+        autocross/sharpnessWeight: -15.0
+
+        skidpad/centerX : 15.0
+        skidpad/centerY : 9.125
+        skidpad/innerRadius : 7.625
+        skidpad/centerRadius : 9.125
+        skidpad/outerRadius : 10.625
+        skidpad/firstAlignCenterError : 1.0
+        skidpad/firstAlignRadiusError : 1.0
+        skidpad/errorIncrement : 0.1
+        skidpad/centerError : 0.5
+        skidpad/radiusError : 0.5
+        skidpad/radiusOffsetL : 0.0
+        skidpad/radiusOffsetR : 0.0
+        skidpad/circlePoints : 80
+        skidpad/linePoints : 30
