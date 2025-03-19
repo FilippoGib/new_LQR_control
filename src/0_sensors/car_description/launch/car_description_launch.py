@@ -9,7 +9,7 @@ def generate_launch_description():
 
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
 
-    urdf_file_name = 'urdf/car.urdf'
+    urdf_file_name = 'urdf/carrellino.urdf'
     urdf = os.path.join(
         get_package_share_directory('car_description'),
         urdf_file_name)

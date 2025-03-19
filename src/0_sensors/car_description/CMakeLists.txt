@@ -35,6 +35,7 @@ include_directories(
 
 install(FILES
   src/car.urdf
+  src/carrellino.urdf
   DESTINATION share/${PROJECT_NAME}/urdf/
 )
 
