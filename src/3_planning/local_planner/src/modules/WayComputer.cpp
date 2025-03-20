@@ -392,8 +392,8 @@ Tracklimits WayComputer::getTracklimits() const {
   return this->wayToPublish_.getTracklimits();
 }
 
-mmr_base::msg::MarkerArray WayComputer::getPathCenterLine() const {
-  mmr_base::msg::MarkerArray res;
+visualization_msgs::msg::MarkerArray WayComputer::getPathCenterLine() const {
+  visualization_msgs::msg::MarkerArray res;
 
   // res.replan indicates if the Way is different from last iteration's
   // res.replan = this->way_ != this->lastWay_;
@@ -404,7 +404,7 @@ mmr_base::msg::MarkerArray WayComputer::getPathCenterLine() const {
   // res.markers.reserve(path.size());   // Riserva spazio per i marker
   int id = 0;
   for (const Point &p : path) {   // Riempie i marker con le posizioni del percorso
-    mmr_base::msg::Marker marker; // Crea un nuovo marker
+    visualization_msgs::msg::Marker marker; // Crea un nuovo marker
     //visualizzazione Rvizz
     marker.header.frame_id = "track"; // Imposta il frame_id
     marker.id = id++;
@@ -429,9 +429,9 @@ mmr_base::msg::MarkerArray WayComputer::getPathCenterLine() const {
   return res;
 }
 
-mmr_base::msg::MarkerArray WayComputer::getPathBorderLeft() const {
+visualization_msgs::msg::MarkerArray WayComputer::getPathBorderLeft() const {
 
-  mmr_base::msg::MarkerArray res;
+  visualization_msgs::msg::MarkerArray res;
   
   // Fill Tracklimits
   Tracklimits tracklimits = this->wayToPublish_.getTracklimits();
@@ -447,9 +447,9 @@ mmr_base::msg::MarkerArray WayComputer::getPathBorderLeft() const {
   // res.tracklimits.replan = this->way_.quinEhLobjetiuDeLaSevaDiresio(this->lastWay_);
  return res;
 }
-mmr_base::msg::MarkerArray WayComputer::getPathBorderRight() const {
+visualization_msgs::msg::MarkerArray WayComputer::getPathBorderRight() const {
 
-  mmr_base::msg::MarkerArray res;
+  visualization_msgs::msg::MarkerArray res;
   
   // Fill Tracklimits
   Tracklimits tracklimits = this->wayToPublish_.getTracklimits();

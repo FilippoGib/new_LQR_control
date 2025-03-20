@@ -28,7 +28,7 @@ Node::Node(const double &x, const double &y, const double &xGlobal, const double
   if (this->id >= (1 << HASH_SHIFT_NUM) - 3) RCLCPP_ERROR(rclcpp::get_logger(""),"[urinay] Cone ID is above the allowed threshold, see utils/constants.hpp/HASH_SHIFT_NUM");
 }
 
-Node::Node(const mmr_base::msg::Marker &c)
+Node::Node(const visualization_msgs::msg::Marker &c)
     : Node(c.pose.position.x, c.pose.position.y, c.pose.position.x, c.pose.position.y, c.id) {}
 
 // Node::Node(const geometry_msgs::msg::Point &c, int id)
@@ -79,8 +79,8 @@ double Node::angleWith(const Node &n0, const Node &n1) const {
   return abs(Vector(this->point(), n0.point()).angleWith(Vector(this->point(), n1.point())));
 }
 
-mmr_base::msg::Marker Node::cone() const {
-  mmr_base::msg::Marker res;
+visualization_msgs::msg::Marker Node::cone() const {
+  visualization_msgs::msg::Marker res;
   res.header.frame_id = "track";
   res.scale.x = 0.1; 
   res.scale.y = 0.1;

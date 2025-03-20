@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include <mmr_base/msg/marker_array.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 //#include <as_msgs/PathLimits.h>
 #include <rclcpp/rclcpp.hpp>

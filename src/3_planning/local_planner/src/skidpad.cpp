@@ -1,4 +1,4 @@
-#include "local_planner/skidpad.h"
+#include "skidpad.h"
 
 /// @brief constructor
 /// @param nh node handler
@@ -75,7 +75,7 @@ void SkidpadPlanner::loadParameters()
 
 /// @brief callback to get the race status from the subscription
 /// @param raceStatus custom message
-void SkidpadPlanner::raceStatusCallBack(mmr_base::msg::RaceStatus::SharedPtr raceStatus)
+void SkidpadPlanner::raceStatusCallBack(common_msgs::msg::RaceStatus::SharedPtr raceStatus)
 {
 	this->raceStatus.current_lap = raceStatus->current_lap;
 }

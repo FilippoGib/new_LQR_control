@@ -7,9 +7,9 @@
 #include "rmw/macros.h"
 #include "rmw/visibility_control.h"
 #include "rmw/types.h"
-#include "local_planner/acceleration.h"
-#include "local_planner/autocross.h"
-#include "local_planner/skidpad.h"
+#include "acceleration.h"
+#include "autocross.h"
+#include "skidpad.h"
 
 using namespace std::chrono_literals;
 
@@ -28,7 +28,7 @@ class LocalPlannerNode : public rclcpp::Node
 		rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr  bordersCompletedPub;
 		rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr  centerLineCompletedPub;
 
-		rclcpp::Subscription<mmr_base::msg::RaceStatus>::SharedPtr raceStatusSub;
+		rclcpp::Subscription<common_msgs::msg::RaceStatus>::SharedPtr raceStatusSub;
     	rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odometrySub;
 		rclcpp::Subscription<visualization_msgs::msg::Marker>::SharedPtr slamConesSub;
 

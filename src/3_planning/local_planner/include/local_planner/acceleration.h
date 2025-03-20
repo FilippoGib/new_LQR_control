@@ -5,7 +5,7 @@
 #include <geometry_msgs/msg/point.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
-#include "mmr_base/msg/race_status.hpp"
+#include "common_msgs/msg/race_status.hpp"
 #include <unistd.h>
 
 using Point = geometry_msgs::msg::Point;

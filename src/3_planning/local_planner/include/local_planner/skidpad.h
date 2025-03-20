@@ -5,7 +5,7 @@
 #include <geometry_msgs/msg/point.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
-#include "mmr_base/msg/race_status.hpp"
+#include "common_msgs/msg/race_status.hpp"
 #include <unistd.h>
 
 using Point = geometry_msgs::msg::Point;
@@ -26,7 +26,7 @@ class SkidpadPlanner
 
         void loadParameters();
 
-		void raceStatusCallBack(mmr_base::msg::RaceStatus::SharedPtr raceStatus);
+		void raceStatusCallBack(common_msgs::msg::RaceStatus::SharedPtr raceStatus);
 
 		void odometryCallback(nav_msgs::msg::Odometry::SharedPtr odometry);
 
@@ -54,7 +54,7 @@ class SkidpadPlanner
 		rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr centerLinePub;
 
         visualization_msgs::msg::MarkerArray borders;
-        mmr_base::msg::RaceStatus raceStatus;
+        common_msgs::msg::RaceStatus raceStatus;
 		Point odometry;
 
         Circle circleL;

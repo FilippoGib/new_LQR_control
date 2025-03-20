@@ -1,4 +1,4 @@
-#include "local_planner/local_planner_node.h"
+#include "local_planner_node.h"
 
 /// @brief node constructor. It creates a timer to try to call initialization() every 500 ms.
 LocalPlannerNode::LocalPlannerNode() : Node("local_planner")
@@ -78,7 +78,7 @@ void LocalPlannerNode::initialization()
 
 		this->autocrossPlanner = std::make_shared<AutocrossPlanner>(shared_from_this(), this->bordersPub, this->centerLinePub, this->bordersCompletedPub, this->centerLineCompletedPub);
 
-		this->raceStatusSub = this->create_subscription<mmr_base::msg::RaceStatus>(this->param_topicRaceStatus, 1, std::bind(&AutocrossPlanner::raceStatusCallBack, this->autocrossPlanner, std::placeholders::_1));
+		this->raceStatusSub = this->create_subscription<common_msgs::msg::RaceStatus>(this->param_topicRaceStatus, 1, std::bind(&AutocrossPlanner::raceStatusCallBack, this->autocrossPlanner, std::placeholders::_1));
 		this->odometrySub = this->create_subscription<nav_msgs::msg::Odometry>(this->param_topicOdometry, 1, std::bind(&AutocrossPlanner::odometryCallback, this->autocrossPlanner, std::placeholders::_1));
 		this->slamConesSub = this->create_subscription<visualization_msgs::msg::Marker>(this->param_topicSlamCones, 1, std::bind(&AutocrossPlanner::slamConesCallback, this->autocrossPlanner, std::placeholders::_1));
 	}
@@ -88,7 +88,7 @@ void LocalPlannerNode::initialization()
 
 		this->skidpadPlanner = std::make_shared<SkidpadPlanner>(shared_from_this(), this->bordersPub, this->centerLinePub);
 
-		this->raceStatusSub = this->create_subscription<mmr_base::msg::RaceStatus>(this->param_topicRaceStatus, 1, std::bind(&SkidpadPlanner::raceStatusCallBack, this->skidpadPlanner, std::placeholders::_1));
+		this->raceStatusSub = this->create_subscription<common_msgs::msg::RaceStatus>(this->param_topicRaceStatus, 1, std::bind(&SkidpadPlanner::raceStatusCallBack, this->skidpadPlanner, std::placeholders::_1));
 		this->odometrySub = this->create_subscription<nav_msgs::msg::Odometry>(this->param_topicOdometry, 1, std::bind(&SkidpadPlanner::odometryCallback, this->skidpadPlanner, std::placeholders::_1));
 		this->slamConesSub = this->create_subscription<visualization_msgs::msg::Marker>(this->param_topicSlamCones, 1, std::bind(&SkidpadPlanner::slamConesCallback, this->skidpadPlanner, std::placeholders::_1));
 	}

@@ -11,8 +11,8 @@
 #pragma once
 
 #include <rclcpp/rclcpp.hpp>
-#include <mmr_base/msg/marker.hpp>
-#include <mmr_base/msg/marker_array.hpp>
+#include <visualization_msgs/msg/marker.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 #include "structures/Way.hpp"
 #include "utils/Params.hpp"
@@ -27,7 +27,7 @@ class Visualization {
   /**
    * @brief All Markers publishers.
    */
-  rclcpp::Publisher<mmr_base::msg::MarkerArray>::SharedPtr trianglesPub, midpointsPub, wayPub;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr trianglesPub, midpointsPub, wayPub;
   
   /**
    * @brief All parameters related to the Visualization class.

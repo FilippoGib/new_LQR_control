@@ -1,4 +1,4 @@
-#include "local_planner/acceleration.h"
+#include "acceleration.h"
 
 /// @brief constructor
 /// @param nh node handler
