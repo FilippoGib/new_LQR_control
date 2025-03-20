@@ -35,12 +35,12 @@ void AccelerationPlanner::odometryCallback(nav_msgs::msg::Odometry::SharedPtr od
 /// @param slamCones cones from odometry  (x,y,z,red,green,blue)
 void AccelerationPlanner::slamConesCallback(visualization_msgs::msg::Marker::SharedPtr slamCones)
 {
-	std::vector<Point> slamConesL;
-	std::vector<Point> slamConesR;
+	std::vector<geometry_msgs::msg::Point> slamConesL;
+	std::vector<geometry_msgs::msg::Point> slamConesR;
 
 	for (int i = 0; i < slamCones->points.size(); i ++)
 	{
-		Point point;
+		geometry_msgs::msg::Point point;
 		point.x = slamCones->points[i].x;
 		point.y = slamCones->points[i].y;
 
@@ -71,11 +71,11 @@ void AccelerationPlanner::slamConesCallback(visualization_msgs::msg::Marker::Sha
 
 	this->borders.markers.clear();
 
-	std::vector<Point> borderL = this->generateBorder(slamConesL,
+	std::vector<geometry_msgs::msg::Point> borderL = this->generateBorder(slamConesL,
 													  true,
 													  horizon);
 
-	std::vector<Point> borderR = this->generateBorder(slamConesR,
+	std::vector<geometry_msgs::msg::Point> borderR = this->generateBorder(slamConesR,
 													  false,
 													  horizon);
 
@@ -90,11 +90,11 @@ void AccelerationPlanner::slamConesCallback(visualization_msgs::msg::Marker::Sha
 /// @param pointEnd end of the line
 /// @param horizon furthest point (x coordinate) the car can see
 /// @return list of points discretized from the line
-std::vector<Point> AccelerationPlanner::generateDiscretizedLine(const Point &pointStart,
-										           			    const Point &pointEnd,
+std::vector<geometry_msgs::msg::Point> AccelerationPlanner::generateDiscretizedLine(const geometry_msgs::msg::Point &pointStart,
+										           			    const geometry_msgs::msg::Point &pointEnd,
 																const double &horizon)
 {
-	std::vector<Point> discretizedPoints;
+	std::vector<geometry_msgs::msg::Point> discretizedPoints;
 
 	double slope = (pointStart.y - pointEnd.y) / (pointStart.x - pointEnd.x); // m in the line equation
 	double intercept = (pointEnd.x * pointStart.y - pointStart.x * pointEnd.y) / (pointEnd.x - pointStart.x); // q in the line equation
@@ -103,7 +103,7 @@ std::vector<Point> AccelerationPlanner::generateDiscretizedLine(const Point &poi
 	// creating the border by populating the "virtual" line generated before
 	do
 	{
-		Point point;
+		geometry_msgs::msg::Point point;
 		point.x = odometry.x + displacement;
 		point.y = slope * point.x + intercept;
 
@@ -121,7 +121,7 @@ std::vector<Point> AccelerationPlanner::generateDiscretizedLine(const Point &poi
 /// @param borderType left | right [true | false]
 /// @param horizon furthest point (x coordinate) the car can see
 /// @return pair of points that approximates the border the best
-std::vector<Point> AccelerationPlanner::generateBorder(const std::vector<Point> &slamCones,
+std::vector<geometry_msgs::msg::Point> AccelerationPlanner::generateBorder(const std::vector<geometry_msgs::msg::Point> &slamCones,
 													   const bool &borderType,
 													   const double &horizon)
 {
@@ -154,18 +154,18 @@ std::vector<Point> AccelerationPlanner::generateBorder(const std::vector<Point> 
 		border.color.b = 0.0;
 	}
 
-	std::pair<Point, Point> borderPair; // pair of points generating the border line
+	std::pair<geometry_msgs::msg::Point, geometry_msgs::msg::Point> borderPair; // pair of points generating the border line
 
 	int minLineCost = slamCones.size();
 
 	// ransack algorithm to find the best straight line that approximate the current border
 	for (int i = 0; i < slamCones.size() - 1; i ++)
 	{
-		Point p1 = slamCones[i];
+		geometry_msgs::msg::Point p1 = slamCones[i];
 
 		for (int j = i + 1; j < slamCones.size(); j ++)
 		{
-			Point p2 = slamCones[j];
+			geometry_msgs::msg::Point p2 = slamCones[j];
 
 			int lineCost = 0;
 
@@ -174,7 +174,7 @@ std::vector<Point> AccelerationPlanner::generateBorder(const std::vector<Point> 
 				if (k == i || k == j)
 					continue;
 
-				Point p3 = slamCones[k];
+				geometry_msgs::msg::Point p3 = slamCones[k];
 
 				double numerator = std::abs(((p2.x - p1.x) * (p1.y - p3.y)) - ((p1.x - p3.x) * (p2.y - p1.y)));
             	double denominator = std::sqrt((p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y));
@@ -211,8 +211,8 @@ std::vector<Point> AccelerationPlanner::generateBorder(const std::vector<Point> 
 /// @param borderL left border
 /// @param borderR right border
 /// @param horizon furthest point (x coordinate) the car can see
-void AccelerationPlanner::generateCenterLine(const std::vector<Point> &borderL,
-											 const std::vector<Point> &borderR)
+void AccelerationPlanner::generateCenterLine(const std::vector<geometry_msgs::msg::Point> &borderL,
+											 const std::vector<geometry_msgs::msg::Point> &borderR)
 {
 	visualization_msgs::msg::Marker centerLine;
 	centerLine.id = 0;
@@ -233,8 +233,8 @@ void AccelerationPlanner::generateCenterLine(const std::vector<Point> &borderL,
 	centerLine.pose.orientation.y = 0.0;
 	centerLine.pose.orientation.z = 0.0;
 
-	std::vector<Point> longerBorder;
-	std::vector<Point> shorterBorder;
+	std::vector<geometry_msgs::msg::Point> longerBorder;
+	std::vector<geometry_msgs::msg::Point> shorterBorder;
 
 	if (borderL.size() > borderR.size())
 	{
@@ -247,7 +247,7 @@ void AccelerationPlanner::generateCenterLine(const std::vector<Point> &borderL,
 		shorterBorder = borderL;
 	}
 
-	std::vector<Point> centerPoints;
+	std::vector<geometry_msgs::msg::Point> centerPoints;
 	centerPoints.push_back(this->odometry);
 
 	double minOdometryDistance; // distance of the closest odometry point on the longerBorder
@@ -287,7 +287,7 @@ void AccelerationPlanner::generateCenterLine(const std::vector<Point> &borderL,
 			}
 		}
 
-		Point point;
+		geometry_msgs::msg::Point point;
 		point.x = (longerBorder[i].x + shorterBorder[minIndex].x) / 2.0;
 		point.y = (longerBorder[i].y + shorterBorder[minIndex].y) / 2.0;
 

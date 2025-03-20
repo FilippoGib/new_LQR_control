@@ -9,11 +9,11 @@
 #include "utils/Params.hpp"
 #include "modules/WayComputer.hpp"
 #include "modules/Visualization.hpp"
+#include "modules/DelaunayTri.hpp"
+#include "utils/Time.hpp"
 #include <unistd.h>
 
 // #define DEBUG 1
-
-using Point = geometry_msgs::msg::Point;
 
 class AutocrossPlanner
 {
@@ -29,6 +29,9 @@ class AutocrossPlanner
 		void odometryCallback(nav_msgs::msg::Odometry::SharedPtr odometry);
 
 		void slamConesCallback(visualization_msgs::msg::Marker::SharedPtr slamCones);
+		
+		Params *params;
+		WayComputer *wayComputer;
 
 
 	private:
@@ -43,10 +46,9 @@ class AutocrossPlanner
 		int currentLap;
 		bool idle = false; //when true the node is idle and only publishes centerline_completed in a transient local fashion 
 		
-		Params *params;
-		WayComputer *wayComputer;
-		Visualization *visualization;
+		// Params *params;
+		// WayComputer *wayComputer;
 
-}
+};
 
 #endif //AUTOCROSS_H

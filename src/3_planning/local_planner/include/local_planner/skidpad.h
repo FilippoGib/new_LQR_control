@@ -8,9 +8,7 @@
 #include "common_msgs/msg/race_status.hpp"
 #include <unistd.h>
 
-using Point = geometry_msgs::msg::Point;
-
-struct Circle
+struct SkidpadCircle
 {
 	double x;
 	double y;
@@ -32,18 +30,18 @@ class SkidpadPlanner
 
 		void slamConesCallback(visualization_msgs::msg::Marker::SharedPtr slamCones);
 
-        std::vector<Point> generateDiscretizedLine(const Point &pointStart,
-										           const Point &pointEnd);
+        std::vector<geometry_msgs::msg::Point> generateDiscretizedLine(const geometry_msgs::msg::Point &pointStart,
+										           const geometry_msgs::msg::Point &pointEnd);
 
-        std::vector<Point> generateDiscretizedCircle(const Circle &circle,
+        std::vector<geometry_msgs::msg::Point> generateDiscretizedCircle(const SkidpadCircle &circle,
                                                      const bool &borderType);
 
-        void generateCircleCenter(const std::vector<Point> &slamCones,
+        void generateCircleCenter(const std::vector<geometry_msgs::msg::Point> &slamCones,
                                   const bool &borderType,
                                   const double &centerError,
                                   const double &radiusError);
 
-		void generateBorder(const std::vector<Point> &slamCones,
+		void generateBorder(const std::vector<geometry_msgs::msg::Point> &slamCones,
                             const bool &borderType);
 
 		void generateCenterLine();
@@ -55,10 +53,10 @@ class SkidpadPlanner
 
         visualization_msgs::msg::MarkerArray borders;
         common_msgs::msg::RaceStatus raceStatus;
-		Point odometry;
+		geometry_msgs::msg::Point odometry;
 
-        Circle circleL;
-        Circle circleR;
+       SkidpadCircle circleL;
+       SkidpadCircle circleR;
 
         bool firstAlign;
         int lastOdometry;

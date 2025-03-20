@@ -12,6 +12,7 @@
 
 #include <nav_msgs/msg/odometry.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
+#include <visualization_msgs/msg/marker.hpp>
 // #include <visualization_msgs/msg/path_limits.hpp>
 // #include <visualization_msgs/msg/tracklimits.hpp>
 /*#include <as_msgs/CarState.h>
@@ -232,7 +233,7 @@ class WayComputer {
    * @brief Returns the centerline and track limits in Marker Array format
    * in global coordinates.
    */
-  visualization_msgs::msg::MarkerArray getPathCenterLine() const;
+  visualization_msgs::msg::Marker getPathCenterLine() const;
   /**
    * @brief Returns the centerline and track limits in Marker Array format
    * in global coordinates.

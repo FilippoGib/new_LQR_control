@@ -92,12 +92,12 @@ void SkidpadPlanner::odometryCallback(nav_msgs::msg::Odometry::SharedPtr odometr
 /// @param slamCones cones from odometry  (x,y,z,red,green,blue)
 void SkidpadPlanner::slamConesCallback(visualization_msgs::msg::Marker::SharedPtr slamCones)
 {
-	std::vector<Point> slamConesL;
-	std::vector<Point> slamConesR;
+	std::vector<geometry_msgs::msg::Point> slamConesL;
+	std::vector<geometry_msgs::msg::Point> slamConesR;
 
 	for (int i = 0; i < slamCones->points.size(); i ++)
 	{
-		Point point;
+		geometry_msgs::msg::Point point;
 		point.x = slamCones->points[i].x;
 		point.y = slamCones->points[i].y;
 
@@ -137,10 +137,10 @@ void SkidpadPlanner::slamConesCallback(visualization_msgs::msg::Marker::SharedPt
 /// @param pointStart beginning of the line
 /// @param pointEnd end of the line
 /// @return list of points discretized from the line
-std::vector<Point> SkidpadPlanner::generateDiscretizedLine(const Point &pointStart,
-										                   const Point &pointEnd)
+std::vector<geometry_msgs::msg::Point> SkidpadPlanner::generateDiscretizedLine(const geometry_msgs::msg::Point &pointStart,
+										                   const geometry_msgs::msg::Point &pointEnd)
 {
-	std::vector<Point> discretizedPoints;
+	std::vector<geometry_msgs::msg::Point> discretizedPoints;
 
 	double lengthLng = pointEnd.x - pointStart.x;
 	double lengthLat = pointEnd.y - pointStart.y;
@@ -149,7 +149,7 @@ std::vector<Point> SkidpadPlanner::generateDiscretizedLine(const Point &pointSta
 
 	for (int i = 0; i < this->param_linePoints; i ++)
 	{
-		Point point;
+		geometry_msgs::msg::Point point;
 		point.x = pointStart.x + sampleLng * i;
 		point.y = pointStart.y + sampleLat * i;
 		point.z = 0.0;
@@ -164,16 +164,16 @@ std::vector<Point> SkidpadPlanner::generateDiscretizedLine(const Point &pointSta
 /// @param circle circle (struct)
 /// @param borderType left | right [true | false]
 /// @return vector of points
-std::vector<Point> SkidpadPlanner::generateDiscretizedCircle(const Circle &circle,
+std::vector<geometry_msgs::msg::Point> SkidpadPlanner::generateDiscretizedCircle(const SkidpadCircle &circle,
                                                              const bool &borderType)
 {
-	std::vector<Point> discretizedPoints;
+	std::vector<geometry_msgs::msg::Point> discretizedPoints;
 
 	if (borderType)
 	{
 		for (int i = 0; i < this->param_circlePoints; i ++)
 		{
-			Point point;
+			geometry_msgs::msg::Point point;
 			point.x = circle.x + circle.r  * std::cos((((2.0 * M_PI) / this->param_circlePoints) * i) - M_PI_2);
 			point.y = circle.y + circle.r  * std::sin((((2.0 * M_PI) / this->param_circlePoints) * i) - M_PI_2);
 			point.z = 0.0;
@@ -185,7 +185,7 @@ std::vector<Point> SkidpadPlanner::generateDiscretizedCircle(const Circle &circl
 	{
 		for (int i = 0; i < this->param_circlePoints; i ++)
 		{
-			Point point;
+			geometry_msgs::msg::Point point;
 			point.x = circle.x + circle.r  * std::cos((((2.0 * M_PI) / this->param_circlePoints) * i) + M_PI_2);
 			point.y = circle.y + circle.r  * std::sin((((2.0 * M_PI) / this->param_circlePoints) * i) + M_PI_2);
 			point.z = 0.0;
@@ -205,12 +205,12 @@ std::vector<Point> SkidpadPlanner::generateDiscretizedCircle(const Circle &circl
 /// @param borderType left | right [true | false]
 /// @param centerError tolerated error on the new center position relative to the last iteration
 /// @param radiusError tolerated error on the new radius relative to the supposed value (from parameter)
-void SkidpadPlanner::generateCircleCenter(const std::vector<Point> &slamCones,
+void SkidpadPlanner::generateCircleCenter(const std::vector<geometry_msgs::msg::Point> &slamCones,
 										  const bool &borderType,
                                           const double &centerError,
                                           const double &radiusError)
 {
-	Circle meanCircle;
+	SkidpadCircle meanCircle;
 	meanCircle.x = 0.0;
 	meanCircle.y = 0.0;
 	meanCircle.r = 0.0;
@@ -218,17 +218,17 @@ void SkidpadPlanner::generateCircleCenter(const std::vector<Point> &slamCones,
 	// given 3 points, generate the circle
 	for(int i = 0; i < slamCones.size() - 2; i ++)
 	{
-		Point p1 = slamCones[i];
+		geometry_msgs::msg::Point p1 = slamCones[i];
 
 		for(int j = i + 1; j < slamCones.size() - 1; j ++)
 		{
-			Point p2 = slamCones[j];
+			geometry_msgs::msg::Point p2 = slamCones[j];
 
 			for(int k = j + 1; k < slamCones.size(); k ++)
 			{
-				Point p3 = slamCones[k];
+				geometry_msgs::msg::Point p3 = slamCones[k];
 
-				Circle circle;
+				SkidpadCircle circle;
 
 				double d = 2.0 * (p1.x * (p2.y - p3.y) +
 								  p2.x * (p3.y - p1.y) +
@@ -302,7 +302,7 @@ void SkidpadPlanner::generateCircleCenter(const std::vector<Point> &slamCones,
 /// @brief generates the border based on a vector of points (all left-side | all right-side). 1) finds center -> 2) discretizes the circle -> 3) publishes
 /// @param slamCones cones from odometry  (x,y,z,red,green,blue)
 /// @param borderType left | right [true | false]
-void SkidpadPlanner::generateBorder(const std::vector<Point> &slamCones,
+void SkidpadPlanner::generateBorder(const std::vector<geometry_msgs::msg::Point> &slamCones,
 								    const bool &borderType)
 {
 	visualization_msgs::msg::Marker border;
@@ -336,8 +336,8 @@ void SkidpadPlanner::generateBorder(const std::vector<Point> &slamCones,
                                    this->param_radiusError);
 	}
 
-	std::vector<Point> innerCircle;
-	std::vector<Point> outerCircle;
+	std::vector<geometry_msgs::msg::Point> innerCircle;
+	std::vector<geometry_msgs::msg::Point> outerCircle;
 
 	if (borderType)
 	{
@@ -399,14 +399,14 @@ void SkidpadPlanner::generateCenterLine()
 	centerLine.pose.orientation.z = 0.0;
 
 	this->circleL.r = this->param_centerRadius + this->param_radiusOffsetL;
-	std::vector<Point> circlePointsL = generateDiscretizedCircle(this->circleL,
+	std::vector<geometry_msgs::msg::Point> circlePointsL = generateDiscretizedCircle(this->circleL,
 																 true);
 
 	this->circleR.r = this->param_centerRadius + this->param_radiusOffsetR;
-	std::vector<Point> circlePointsR = generateDiscretizedCircle(this->circleR,
+	std::vector<geometry_msgs::msg::Point> circlePointsR = generateDiscretizedCircle(this->circleR,
 																 false);
 
-	Point start;
+	geometry_msgs::msg::Point start;
 	start.x = 0.0;
 	start.y = 0.0;
 	start.z = 0.0;
@@ -418,16 +418,16 @@ void SkidpadPlanner::generateCenterLine()
 	double a = (d * d) / (d * 2.0);
 	double h = std::sqrt((this->param_outerRadius * this->param_outerRadius) - (a * a));
 
-	Point base;
+	geometry_msgs::msg::Point base;
 	base.x = this->circleR.x + (a * (this->circleL.x - this->circleR.x)) / d;
 	base.y = this->circleR.y + (a * (this->circleL.y - this->circleR.y)) / d;
 
-	Point middleStart;
+	geometry_msgs::msg::Point middleStart;
 	middleStart.x = base.x + (h * (this->circleR.y - this->circleL.y)) / d;
 	middleStart.y = base.y - (h * (this->circleR.x - this->circleL.x)) / d;
 	middleStart.z = 0.0;
 
-	Point middleEnd;
+	geometry_msgs::msg::Point middleEnd;
 	middleEnd.x = base.x - (h * (this->circleR.y - this->circleL.y)) / d;
 	middleEnd.y = base.y + (h * (this->circleR.x - this->circleL.x)) / d;
 	middleEnd.z = 0.0;
@@ -435,21 +435,21 @@ void SkidpadPlanner::generateCenterLine()
 	double slope = (middleStart.y - middleEnd.y) / (middleStart.x - middleEnd.x);
 	double intercept = (middleEnd.x * middleStart.y - middleStart.x * middleEnd.y) / (middleEnd.x - middleStart.x);
 
-	Point end;
+	geometry_msgs::msg::Point end;
 	end.x = 30.0;
 	end.y = slope * end.x + intercept;
 	end.z = 0.0;
 
-	std::vector<Point> startLine = this->generateDiscretizedLine(start,
+	std::vector<geometry_msgs::msg::Point> startLine = this->generateDiscretizedLine(start,
 																 middleStart);
 
-	std::vector<Point> middleStartLine = this->generateDiscretizedLine(middleStart,
+	std::vector<geometry_msgs::msg::Point> middleStartLine = this->generateDiscretizedLine(middleStart,
 																       circlePointsR.front());
 
-	std::vector<Point> middleEndLine = this->generateDiscretizedLine(circlePointsL.back(),
+	std::vector<geometry_msgs::msg::Point> middleEndLine = this->generateDiscretizedLine(circlePointsL.back(),
 																     middleEnd);
 
-	std::vector<Point> endLine = this->generateDiscretizedLine(middleEnd,
+	std::vector<geometry_msgs::msg::Point> endLine = this->generateDiscretizedLine(middleEnd,
 															   end);
 
 	centerLine.points.insert(centerLine.points.end(),

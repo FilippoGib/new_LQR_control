@@ -42,14 +42,14 @@ Triangle DelaunayTri::superTriangle(const std::vector<Node> &nodes) {
 
 TriangleSet DelaunayTri::compute(const std::vector<Node> &nodes) {
   if (nodes.size() < 3) return {};
-  RCLCPP_INFO(rclcpp::get_logger(""), "[urinay] entered compute(), size of nodes is %ld", nodes.size()); //ok
+  RCLCPP_INFO(rclcpp::get_logger(""), "[local_planner] entered compute(), size of nodes is %ld", nodes.size()); //ok
 
   TriangleSet triangulation;
 
   // Add a triangle large enough to contain all the points
   triangulation.insert(superTriangle(nodes));
 
-  RCLCPP_INFO(rclcpp::get_logger(""), "[urinay] the size of first triangulation is %ld", triangulation.size()); //ok
+  RCLCPP_INFO(rclcpp::get_logger(""), "[local_planner] the size of first triangulation is %ld", triangulation.size()); //ok
 
   // Add all the points one at a time to the triangulation
   for (const Node &n : nodes) {
@@ -100,7 +100,7 @@ TriangleSet DelaunayTri::compute(const std::vector<Node> &nodes) {
       it++;
     }
   }
-  RCLCPP_INFO(rclcpp::get_logger(""), "[urinay] the size of last triangulation is %ld", triangulation.size()); //ok
+  RCLCPP_INFO(rclcpp::get_logger(""), "[local_planner] the size of last triangulation is %ld", triangulation.size()); //ok
 
   return triangulation;
 

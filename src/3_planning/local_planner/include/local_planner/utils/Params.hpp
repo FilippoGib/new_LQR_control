@@ -26,8 +26,9 @@ class Params {
  public:
   Params(rclcpp::Node::SharedPtr const nh);
   struct Main {
-    std::string input_cones_topic, input_pose_topic, output_full_center_topic, output_full_left_topic, output_full_right_topic, output_partial_center_topic, output_partial_left_topic, output_partial_right_topic;
+    // std::string input_cones_topic, input_pose_topic, output_full_center_topic, output_full_left_topic, output_full_right_topic, output_partial_center_topic, output_partial_left_topic, output_partial_right_topic;
     // std::string markers_full_topic, markers_partial_topic;
+    // std::string input_pose_topic;
     std::string package_path;
     bool shutdown_on_loop_closure;
     float min_cone_confidence;

@@ -187,7 +187,7 @@ size_t WayComputer::treeSearch(std::vector<HeurInd> &nextEdges, const KDTree &mi
   auto searchBeginTime = rclcpp::Clock().now();
   while (not cua.empty()) {
     if (rclcpp::Clock().now() - searchBeginTime > rclcpp::Duration::from_seconds(params.max_treeSearch_time)) {
-      RCLCPP_WARN(rclcpp::get_logger("urinay"), "Tree search time limit exceeded.");
+      RCLCPP_WARN(rclcpp::get_logger("local_planner"), "Tree search time limit exceeded.");
       break;
     }
     Trace t = cua.front();
@@ -311,7 +311,7 @@ void WayComputer::stateCallback(const nav_msgs::msg::Odometry::SharedPtr odom) {
 
 void WayComputer::update(TriangleSet &triangulation, const rclcpp::Time &stamp) {
   if (not this->localTfValid_) {
-    RCLCPP_WARN(rclcpp::get_logger("urinay"), "CarState not being received.");
+    RCLCPP_WARN(rclcpp::get_logger("local_planner"), "CarState not being received.");
     return;
   }
 
@@ -355,7 +355,7 @@ void WayComputer::update(TriangleSet &triangulation, const rclcpp::Time &stamp) 
 
   // #6: Check failsafe(s)
   if (this->params_.general_failsafe and this->way_.sizeAheadOfCar() < MIN_FAILSAFE_WAY_SIZE and !this->isLoopClosed_) {
-    RCLCPP_WARN(rclcpp::get_logger("urinay"), "GENERAL FAILSAFE ACTIVATED!");
+    RCLCPP_WARN(rclcpp::get_logger("local_planner"), "GENERAL FAILSAFE ACTIVATED!");
     this->computeWay(edgeVec, this->generalFailsafe_);
   }
 
@@ -392,42 +392,46 @@ Tracklimits WayComputer::getTracklimits() const {
   return this->wayToPublish_.getTracklimits();
 }
 
-visualization_msgs::msg::MarkerArray WayComputer::getPathCenterLine() const {
-  visualization_msgs::msg::MarkerArray res;
+visualization_msgs::msg::Marker WayComputer::getPathCenterLine() const {
+  visualization_msgs::msg::Marker marker;
 
-  // res.replan indicates if the Way is different from last iteration's
-  // res.replan = this->way_ != this->lastWay_;
-
-  // Fill path
+  // Get the centerline path as a vector of Points.
   std::vector<Point> path = this->wayToPublish_.getPath();
 
-  // res.markers.reserve(path.size());   // Riserva spazio per i marker
-  int id = 0;
-  for (const Point &p : path) {   // Riempie i marker con le posizioni del percorso
-    visualization_msgs::msg::Marker marker; // Crea un nuovo marker
-    //visualizzazione Rvizz
-    marker.header.frame_id = "track"; // Imposta il frame_id
-    marker.id = id++;
-    marker.scale.x = 0.3; 
-    marker.scale.y = 0.3;
-    marker.scale.z = 0.3;
-    marker.pose.orientation.w = 1.0;
-    marker.pose.orientation.x = 0.0;
-    marker.pose.orientation.y = 0.0;
-    marker.pose.orientation.z = 0.0;
+  // Set up header information.
+  marker.header.frame_id = "track";
+  marker.header.stamp = this->lastStamp_;
+  marker.ns = "path_center_line";
+  marker.id = 0;
+  marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
+  marker.action = visualization_msgs::msg::Marker::ADD;
 
-    marker.color.r = 1.0;
-    marker.color.g = 0.0;
-    marker.color.b = 0.0;
-    marker.color.a = 1.0;
+  // For a LINE_STRIP marker, only scale.x is used (as the width of the line).
+  marker.scale.x = 0.3;
 
-    marker.header.stamp = this->lastStamp_;
-    marker.pose.position = p.gmPoint(); // Imposta la posizione
-    res.markers.push_back(marker); // Aggiungi il marker al vettore
+  // Set color to red.
+  marker.color.r = 1.0;
+  marker.color.g = 0.0;
+  marker.color.b = 0.0;
+  marker.color.a = 1.0;
+
+  // Set the marker's pose to identity. The points are specified relative to the header frame.
+  marker.pose.position.x = 0.0;
+  marker.pose.position.y = 0.0;
+  marker.pose.position.z = 0.0;
+  marker.pose.orientation.w = 1.0;
+  marker.pose.orientation.x = 0.0;
+  marker.pose.orientation.y = 0.0;
+  marker.pose.orientation.z = 0.0;
+
+  // Add each point in the path to the marker's points vector.
+  for (const Point &p : path) {
+    marker.points.push_back(p.gmPoint());
   }
 
-  return res;
+  return marker;
 }
+
 
 visualization_msgs::msg::MarkerArray WayComputer::getPathBorderLeft() const {
 
