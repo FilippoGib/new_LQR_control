@@ -41,7 +41,7 @@ void Visualization::visualize(const TriangleSet &triSet) const {
   visualization_msgs::msg::Marker mTriangulation, mCircumCenter, mMidpoint;
   size_t id = 0;
   mTriangulation.header.stamp = this->stamp_;
-  mTriangulation.header.frame_id = "global";
+  mTriangulation.header.frame_id = "track";
   mTriangulation.color.a = 1.0;
   mTriangulation.color.r = 1.0;
   mTriangulation.pose.orientation.w = 1.0;
@@ -103,7 +103,7 @@ void Visualization::visualize(const EdgeSet &edgeSet) const {
   visualization_msgs::msg::Marker mMidpoint;
   size_t id = 0;
   mMidpoint.header.stamp = this->stamp_;
-  mMidpoint.header.frame_id = "global";
+  mMidpoint.header.frame_id = "track";
   mMidpoint.color.a = 1.0;
   mMidpoint.color.r = 1.0;
   mMidpoint.pose.orientation.w = 1.0;
@@ -133,7 +133,7 @@ void Visualization::visualize(const Way &way) const {
   visualization_msgs::msg::Marker mMidpoints, mLeft, mRight;
   size_t id = 0;
   mMidpoints.header.stamp = this->stamp_;
-  mMidpoints.header.frame_id = "global";
+  mMidpoints.header.frame_id = "track";
   mMidpoints.color.a = 1.0;
   mMidpoints.color.g = 1.0;
   mMidpoints.pose.orientation.w = 1.0;

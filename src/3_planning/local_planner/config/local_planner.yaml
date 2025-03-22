@@ -42,10 +42,10 @@ local_planner:
         autocross/general_failsafe:               true    # bool   [-]   whether or not to allow the general fail safe to activate. This means, when no path is possible (shorter than a constant) by using no color, it will automatically increase all search parameters by a factor. It will switch back to normal function, once the path (calculated with normal parameters) is long enough.
         autocross/general_failsafe_safetyFactor:  1.4     # double [-]   when general failsafe is activated, the search parameters will be increased by a factor.
         # Visualization
-        # autocross/publish_markers:                true    # bool   [-]   whether or not to publish the markers of the midpoints and the path.
-        # autocross/marker_topics/triangulation:    "planning/triangulation"
-        # autocross/marker_topics/midpoints:        "planning/midpoints"
-        # autocross/marker_topics/way:             "planning/way"
+        autocross/publish_markers:                true    # bool   [-]   whether or not to publish the markers of the midpoints and the path.
+        autocross/marker_topics/triangulation:    "planning/visualization_triangulation"
+        autocross/marker_topics/midpoints:        "planning/visualization_midpoints"
+        autocross/marker_topics/way:             "planning/visualization_way"
 
         # SKIDPAD PARAMETERS
         skidpad/centerX : 15.0

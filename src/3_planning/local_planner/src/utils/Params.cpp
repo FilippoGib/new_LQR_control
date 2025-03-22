@@ -109,15 +109,15 @@ Params::Params(rclcpp::Node::SharedPtr const nh) {
   wayComputer.way.vital_num_midpoints = nh->get_parameter("autocross/vital_num_midpoints").get_value<int>();
 
   // Visualization
-  // nh->declare_parameter<bool>("autocross/publish_markers", false);
-  // visualization.publish_markers = nh->get_parameter("autocross/publish_markers").get_value<bool>();
+  nh->declare_parameter<bool>("autocross/publish_markers", false);
+  visualization.publish_markers = nh->get_parameter("autocross/publish_markers").get_value<bool>();
 
-  // nh->declare_parameter<std::string>("autocross/marker_topics/triangulation", "planning/triangulation");
-  // visualization.triangulation_topic = nh->get_parameter("autocross/marker_topics/triangulation").get_value<std::string>();
+  nh->declare_parameter<std::string>("autocross/marker_topics/triangulation", "planning/triangulation");
+  visualization.triangulation_topic = nh->get_parameter("autocross/marker_topics/triangulation").get_value<std::string>();
 
-  // nh->declare_parameter<std::string>("autocross/marker_topics/midpoints", "planning/midpoints");
-  // visualization.midpoints_topic = nh->get_parameter("autocross/marker_topics/midpoints").get_value<std::string>();
+  nh->declare_parameter<std::string>("autocross/marker_topics/midpoints", "planning/midpoints");
+  visualization.midpoints_topic = nh->get_parameter("autocross/marker_topics/midpoints").get_value<std::string>();
 
-  // nh->declare_parameter<std::string>("autocross/marker_topics/way", "planning/way");
-  // visualization.way_topic = nh->get_parameter("autocross/marker_topics/way").get_value<std::string>();
+  nh->declare_parameter<std::string>("autocross/marker_topics/way", "planning/way");
+  visualization.way_topic = nh->get_parameter("autocross/marker_topics/way").get_value<std::string>();
 }

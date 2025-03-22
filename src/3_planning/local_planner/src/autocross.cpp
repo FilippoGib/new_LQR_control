@@ -17,20 +17,16 @@ AutocrossPlanner::AutocrossPlanner(const rclcpp::Node::SharedPtr &nh,
 {
 	this->nh = nh;
 
-	this->bordersPub = bordersPub;
+  // Notice how we don't care about the borders
 	this->centerLinePub = centerLinePub;
-	this->bordersCompletedPub = bordersCompletedPub;
 	this->centerLineCompletedPub = centerLineCompletedPub;
 
 	this->currentLap = 0;
 
 	this->params = new Params(nh);
-  
 	this->wayComputer = new WayComputer(params->wayComputer);
-	// Visualization::getInstance().init(nh, params->visualization);
+	Visualization::getInstance().init(nh, params->visualization);
 
-	// auto subPose = nh->create_subscription<nav_msgs::msg::Odometry>("/Odometry", 1, std::bind(&WayComputer::stateCallback, wayComputer, std::placeholders::_1));
-  // RCLCPP_INFO(rclcpp::get_logger(""), "[local_planner] Subscribed to Odometry");
 }
 
 
@@ -38,7 +34,7 @@ AutocrossPlanner::AutocrossPlanner(const rclcpp::Node::SharedPtr &nh,
 /// @param raceStatus custom message
 void AutocrossPlanner::raceStatusCallBack(common_msgs::msg::RaceStatus::SharedPtr raceStatus)
 {
-  
+
 	this->currentLap = raceStatus->current_lap;
 }
 
@@ -108,8 +104,6 @@ void AutocrossPlanner::slamConesCallback(visualization_msgs::msg::Marker::Shared
   else
   {
     this->centerLinePub->publish(this->wayComputer->getPathCenterLine());
-    // pubPartialBorderLeft->publish(wayComputer->getPathBorderLeft()); FUCK BORDERS
-    // pubPartialBorderRight->publish(wayComputer->getPathBorderRight()); FUCK BORDERS
   }
 
   Time::tock("computation"); // End measuring time
