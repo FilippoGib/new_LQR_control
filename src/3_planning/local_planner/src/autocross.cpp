@@ -38,12 +38,19 @@ AutocrossPlanner::AutocrossPlanner(const rclcpp::Node::SharedPtr &nh,
 /// @param raceStatus custom message
 void AutocrossPlanner::raceStatusCallBack(common_msgs::msg::RaceStatus::SharedPtr raceStatus)
 {
+  
 	this->currentLap = raceStatus->current_lap;
 }
 
 void AutocrossPlanner::slamConesCallback(visualization_msgs::msg::Marker::SharedPtr slamCones)
 {
-	RCLCPP_INFO(rclcpp::get_logger(""), "[local_planner] CCAT callback");
+	RCLCPP_INFO(rclcpp::get_logger(""), "[local_planner] slamConesCallback");
+
+  if(this->idle)
+  {
+    RCLCPP_INFO(rclcpp::get_logger(""), "[local_planner] idle");
+    return;
+  }
 
   if (!this->wayComputer->isLocalTfValid())
   {
@@ -87,30 +94,22 @@ void AutocrossPlanner::slamConesCallback(visualization_msgs::msg::Marker::Shared
   this->wayComputer->update(triangles, slamCones->header.stamp);
 
   // Publish loop and write tracklimits to a file
- if (false)
+ if (this->currentLap > 1)
 	{
-		// TODO: implement full trajectory publishing
-//     this->centerLineCompletedPub->publish(wayComputer->getPathCenterLine());
-//     // pubFullBorderLeft->publish(wayComputer->getPathBorderLeft());
-//     // pubFullBorderRight->publish(wayComputer->getPathBorderRight());
-
-//     RCLCPP_INFO(rclcpp::get_logger(""), "[local_planner] Tanco loop");
-//     std::string loopDir = params->main.package_path + "/loops";
-//     mkdir(loopDir.c_str(), 0777);
-//     wayComputer->writeWayToFile(loopDir + "/loop.unay");
-//     if (params->main.shutdown_on_loop_closure)
-//     {
-//       Time::tock("computation"); // End measuring time
-//       rclcpp::shutdown();
-//     }
-		return;
+		
+		this->idle = true;
+    for (int i = 0; i < 5; i ++)
+		{
+			this->centerLineCompletedPub->publish(this->wayComputer->getPathCenterLine()); // trancientlocal topic
+      return;
+    }
 	}
   // Publish partial
   else
   {
     this->centerLinePub->publish(this->wayComputer->getPathCenterLine());
-    // pubPartialBorderLeft->publish(wayComputer->getPathBorderLeft());
-    // pubPartialBorderRight->publish(wayComputer->getPathBorderRight());
+    // pubPartialBorderLeft->publish(wayComputer->getPathBorderLeft()); FUCK BORDERS
+    // pubPartialBorderRight->publish(wayComputer->getPathBorderRight()); FUCK BORDERS
   }
 
   Time::tock("computation"); // End measuring time
