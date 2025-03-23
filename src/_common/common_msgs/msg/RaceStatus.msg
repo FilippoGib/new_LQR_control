@@ -1,7 +1,0 @@
-uint8 current_lap
-builtin_interfaces/Time current_lap_starting_time
-builtin_interfaces/Duration[] lap_times
-bool stopping
-bool use_brake_line
-bool mission_finished
-bool vehicle_standstill

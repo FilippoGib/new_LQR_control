@@ -1,0 +1,9 @@
+speed_estimator_node:
+  ros__parameters:
+    process_noise: 0.1
+    gps_noise: 2.0
+    wheel_noise: 1.0
+    initial_speed: 0.0
+    gps_topic: "/odom/noise"
+    wheel_topic: "/wheel_odom"
+    estimated_speed_topic: "/speed/estimated"

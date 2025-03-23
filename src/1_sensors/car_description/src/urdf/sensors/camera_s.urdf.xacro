@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    
+    <xacro:macro name="car_camera_s" params="name *origin parent">
+        <joint name="${parent}_${name}_joint" type="fixed">
+            <xacro:insert_block name="origin"/>
+            <parent link="${parent}"/>
+            <child link="${name}_link"/>
+        </joint>
+
+        <!-- Camera Center -->
+        <link name="${name}_link">
+            <visual>
+                <origin xyz="0.0 0.0 1.0" rpy="0 0 0"/> 
+                <!-- <geometry>
+                    <mesh filename="package://car_descriptor/src/meshes/Cameras.stl" />
+                </geometry> -->
+                <geometry>
+                    <box size="0.15 0.05 0.05" />
+                    <!--<box size="{$camera_s_length} {$camera_s_width} {$camera_s_height}"/>  -->
+                </geometry>
+                <material name="Black" />
+            </visual>
+        </link>
+
+        <!-- Left Camera -->
+
+        <joint name="left_camera_joint" type="fixed">
+            <parent link="${name}_link"/>
+            <child link="left_camera_frame"/>
+            <origin xyz="0.0 0.15 0.0" rpy="0 0 0" />  
+        </joint>
+
+        <link name="left_camera_frame" />
+
+        <joint name="left_camera_optical_joint" type="fixed">
+            <origin xyz="0.06 0.0 0.0" rpy="0.0 0.0 0.0"/>  
+            <parent link="left_camera_frame"/>
+            <child link="left_camera_optical_frame"/>
+        </joint>
+
+        <link name="left_camera_optical_frame"/>
+
+        <!-- Right Camera -->
+
+        <joint name="right_camera_joint" type="fixed">
+            <parent link="${name}_link"/>
+            <child link="right_camera_frame"/>
+            <origin xyz="0.0 -0.15 0.0" rpy="0 0 0" />  
+        </joint>
+
+        <link name="right_camera_frame" />
+
+        <joint name="right_camera_optical_joint" type="fixed">
+            <origin xyz="0.06 0 0" rpy="0.0 0.0 0.0"/> 
+            <parent link="right_camera_frame"/>
+            <child link="right_camera_optical_frame"/>
+        </joint>
+
+        <link name="right_camera_optical_frame"/>
+    </xacro:macro>
+
+</robot>
+

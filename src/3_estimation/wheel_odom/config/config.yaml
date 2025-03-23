@@ -1,0 +1,10 @@
+/wheel_odom_node:
+  ros__parameters:
+    generic:
+      ecu_topic: "/status/ecu"
+      wheel_odom_topic: "/wheel_odom"
+      frequency: 100
+      sensor_timeout: 0.2
+
+    debug:
+      noise_odom_topic: "/odom/noise"
