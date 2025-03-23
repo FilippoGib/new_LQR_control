@@ -390,9 +390,9 @@ void SkidpadPlanner::generateCenterLine()
 	centerLine.scale.y = 0.1;
 	centerLine.scale.z = 0.1;
 	centerLine.color.a = 1.0;
-	centerLine.color.r = 1.0;
+	centerLine.color.r = 0.0;
 	centerLine.color.g = 1.0;
-	centerLine.color.b = 1.0;
+	centerLine.color.b = 0.0;
 	centerLine.pose.orientation.w = 1.0;
 	centerLine.pose.orientation.x = 0.0;
 	centerLine.pose.orientation.y = 0.0;
