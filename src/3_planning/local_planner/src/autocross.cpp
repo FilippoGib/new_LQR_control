@@ -5,14 +5,10 @@
 
 /// @brief constructor
 /// @param nh node handler
-/// @param bordersPub borders publisher
 /// @param centerLinePub centerline publisher
-/// @param bordersCompletedPub complete borders publisher
 /// @param centerLineCompletedPub complete centerline publisher
 AutocrossPlanner::AutocrossPlanner(const rclcpp::Node::SharedPtr &nh,
-								   const rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr &bordersPub,
 								   const rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr &centerLinePub,
-								   const rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr &bordersCompletedPub,
 								   const rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr &centerLineCompletedPub)
 {
 	this->nh = nh;
@@ -89,7 +85,7 @@ void AutocrossPlanner::slamConesCallback(visualization_msgs::msg::Marker::Shared
   // Update the way with the new triangulation
   this->wayComputer->update(triangles, slamCones->header.stamp);
 
-  // Publish loop and write tracklimits to a file
+  // Publish full trajectory and become idle
  if (this->currentLap > 1)
 	{
 		
@@ -97,8 +93,8 @@ void AutocrossPlanner::slamConesCallback(visualization_msgs::msg::Marker::Shared
     for (int i = 0; i < 5; i ++)
 		{
 			this->centerLineCompletedPub->publish(this->wayComputer->getPathCenterLine()); // trancientlocal topic
-      return;
     }
+    return;
 	}
   // Publish partial
   else

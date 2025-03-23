@@ -76,7 +76,7 @@ void LocalPlannerNode::initialization()
 	{
 		RCLCPP_INFO(this->get_logger(), "INSTANTIATING AUTOCROSS PLANNER");
 
-		this->autocrossPlanner = std::make_shared<AutocrossPlanner>(shared_from_this(), this->bordersPub, this->centerLinePub, this->bordersCompletedPub, this->centerLineCompletedPub);
+		this->autocrossPlanner = std::make_shared<AutocrossPlanner>(shared_from_this(), this->centerLinePub, this->centerLineCompletedPub);
 
 		this->raceStatusSub = this->create_subscription<common_msgs::msg::RaceStatus>(this->param_topicRaceStatus, 1, std::bind(&AutocrossPlanner::raceStatusCallBack, this->autocrossPlanner, std::placeholders::_1));
 		this->odometrySub = this->create_subscription<nav_msgs::msg::Odometry>(this->param_topicOdometry, 1, std::bind(&WayComputer::stateCallback, this->autocrossPlanner->wayComputer, std::placeholders::_1));
