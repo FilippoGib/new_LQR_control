@@ -101,7 +101,7 @@ void GpsToOdom::gpsCallback_normal(const sensor_msgs::msg::NavSatFix::SharedPtr 
     auto odom_msg = nav_msgs::msg::Odometry();
     odom_msg.header.stamp = this->now();
     odom_msg.header.frame_id = "map";
-    odom_msg.child_frame_id = "base_link";
+    odom_msg.child_frame_id = "gps";
     odom_msg.pose.pose.position.x = corrected_x;
     odom_msg.pose.pose.position.y = corrected_y;
     odom_msg.pose.pose.position.z = 0.0;
@@ -110,6 +110,19 @@ void GpsToOdom::gpsCallback_normal(const sensor_msgs::msg::NavSatFix::SharedPtr 
     odom_msg.pose.pose.orientation.z = quat.z();
     odom_msg.pose.pose.orientation.w = quat.w();
 
-
     odom_pub_->publish(odom_msg);
+
+    geometry_msgs::msg::TransformStamped transformStamped;
+    transformStamped.header.stamp = this->now();
+    transformStamped.header.frame_id = "map";
+    transformStamped.child_frame_id = "gps";
+    transformStamped.transform.translation.x = corrected_x;
+    transformStamped.transform.translation.y = corrected_y;
+    transformStamped.transform.translation.z = 0.0;
+    transformStamped.transform.rotation.x = quat.x();
+    transformStamped.transform.rotation.y = quat.y();
+    transformStamped.transform.rotation.z = quat.z();
+    transformStamped.transform.rotation.w = quat.w();
+
+    tf_broadcaster_->sendTransform(transformStamped);
 }
