@@ -431,6 +431,7 @@ visualization_msgs::msg::Marker WayComputer::getPathCenterLine() const {
     geometry_msgs::msg::Point point = p.gmPoint();
     point.z = point_dist_from_borders[index];
     marker.points.push_back(point);
+    index++;
   }
 
   return marker;
