@@ -16,11 +16,12 @@ uint64_t Edge::computeHash(const Node &n0, const Node &n1) {
   return (uint64_t(std::max(n0.id, n1.id)) << HASH_SHIFT_NUM) + std::min(n0.id, n1.id);
 }
 
-double Edge::computeLen(const Node &n0, const Node &n1) {
+/* ----------------------------- Public Methods ----------------------------- */
+
+double Edge::computeLen(const Node &n0, const Node &n1) const {
   return Point::dist(n0.pointGlobal(), n1.pointGlobal());
 }
 
-/* ----------------------------- Public Methods ----------------------------- */
 
 Edge::Edge(const Node &n0, const Node &n1)
     : n0(n0), n1(n1), hash_(computeHash(n0, n1)), len(computeLen(n0, n1)) {}

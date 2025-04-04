@@ -174,6 +174,15 @@ bool Way::containsEdge(const Edge &e) const {
   return false;
 }
 
+std::vector<double> Way::getPointDistanceFromBorders() const {
+  std::vector<double> res;
+  res.reserve(this->path_.size());
+  for (const Edge &e : this->path_) {
+    res.push_back(e.computeLen(e.n0, e.n1)/2.0);
+  }
+  return res;
+}
+
 std::vector<Point> Way::getPath() const {
   std::vector<Point> res;
   res.reserve(this->path_.size());

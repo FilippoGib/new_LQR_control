@@ -32,15 +32,6 @@ class Edge {
    */
   static uint64_t computeHash(const Node &n0, const Node &n1);
   
-  /**
-   * @brief Returns the length that would have an Edge defined by \a n0
-   * and \a n1.
-   * 
-   * @param[in] n0 
-   * @param[in] n1 
-   */
-  static double computeLen(const Node &n0, const Node &n1);
-  friend class std::hash<Edge>;
 
  public:
   /**
@@ -60,6 +51,16 @@ class Edge {
    * @param[in] n1 
    */
   Edge(const Node &n0, const Node &n1);
+
+    /**
+   * @brief Returns the length that would have an Edge defined by \a n0
+   * and \a n1.
+   * 
+   * @param[in] n0 
+   * @param[in] n1 
+   */
+  double computeLen(const Node &n0, const Node &n1) const;
+  friend class std::hash<Edge>;
 
   /**
    * @brief Comparison operator. Two Edge(s) will be equal if they have

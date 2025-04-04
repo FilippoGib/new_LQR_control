@@ -220,6 +220,12 @@ class Way {
   std::vector<Point> getPath() const;
 
   /**
+   * @brief Returns a vector with the distance from each midpoint to the
+   * track limits.
+   */
+  std::vector<double> getPointDistanceFromBorders() const;
+
+  /**
    * @brief Returns the track limits. First element is left track limit
    * and second is right.
    */
