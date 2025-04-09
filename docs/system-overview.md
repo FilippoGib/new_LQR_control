@@ -11,6 +11,8 @@ AGX Orin, 64GB
 - Reach RS2 Rover & Base (RTK + GNSS Module)
 - Wheel Speed Sensor
 
+![logic-connection-scheme](https://github.com/MMR-electric-driverless/orin-drive/tree/main/docs/media/logic-connection-scheme.jpeg)
+
 # Software
 TODO: rifare sta roba, fa schifo e l'ho usata come placeholder
 

@@ -2,8 +2,7 @@
 This file contains some useful terms used frequently in the workshop and during test days. Some of them are MMR-Specific
 
 ## Car Design vocabulary
-![image](https://github.com/user-attachments/assets/1b0d3a6b-3c51-4dd2-8e0f-f0170bf46acd)
-
+![car-design-structure](https://github.com/MMR-electric-driverless/orin-drive/tree/main/docs/media/car-structure-car-design.png)
 
 ## Infi vocabulary
 
