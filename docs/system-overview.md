@@ -1,24 +1,27 @@
 # Hardware
 
-## Main Board
-AGX Orin, 64GB
+## Main Boards
+- AGX Orin Developer Kit, 64GB
+- Kria KR260
 
 ## Sensors
 - [Xsens Mti-680g IMU](https://www.movella.com/products/sensor-modules/xsens-mti-680g-rtk-gnss-ins)
 - Internal Lidar IMU
-- Camera -> to define
-- Ouster OS1 Lidar
-- Reach RS2 Rover & Base (RTK + GNSS Module)
-- Wheel Speed Sensor
+- Hesai OT128 LiDAR
+- Reach RS2 Rover & Base (RTK + GNSS Module + LoRa Receiver)
 
-![logic-connection-scheme](https://github.com/MMR-electric-driverless/orin-drive/tree/main/docs/media/logic-connection-scheme.jpeg)
+## High Level Connections scheme
+![logic-connection-scheme](/docs/media/logic-connection-scheme.jpeg)
 
 # Software
 TODO: rifare sta roba, fa schifo e l'ho usata come placeholder
 
 ## System specifications
-- [ROS2 Humble](https://docs.ros.org/en/humble/index.html)
-- [Jetson 6](https://developer.nvidia.com/embedded/jetpack-sdk-60) (based on ubuntu 22)
+- ORIN
+  - [ROS2 Humble](https://docs.ros.org/en/humble/index.html)
+  - [Jetson 6](https://developer.nvidia.com/embedded/jetpack-sdk-60) (based on ubuntu 22)
+- KRIA
+  - Custom YOCTO Linux build
 
 ## Layers
 ### 0. Sensors
@@ -50,11 +53,3 @@ TODO: rifare sta roba, fa schifo e l'ho usata come placeholder
 - Components:
   - Motor signal generation
   - Actuator control
-
-## Data Flow
-Sensor → Perception → Localization → Planning → Control → Actuation
-
-## Architecture Principles
-- Modular design
-- Independent layer processing
-- Clear hierarchical data flow
