@@ -1,0 +1,30 @@
+lqr_node:
+    ros__parameters:
+        # SETTINGS
+        is_debug_mode: true
+        is_first_lap:  false
+        is_constant_speed: true
+        target_speed: 2.0
+        # SUPPORT FILES
+        trajectory_filename: "/varano_x_y_r_v.csv"
+        odom_topic: "/simulation_state"
+        control_topic: "/car_controls"
+        debug_topic: "/debug/odometry"
+        debug_odom_topic: "/debug/debby"
+        partial_traj_topic: "/planning/centerline"
+        # CAR PHYSICAL PARAMETERS
+        car_mass: 280.0
+        front_length: 0.8162
+        rear_length: 0.7238
+        C_alpha_front: 1e4
+        C_alpha_rear: 1e4
+        # PID parameters
+        PID_p:  1.0
+        PID_i:  0.0
+        PID_d:  0.0
+        # CONTROL VECTORS 
+        vectors_k:
+          - "5.00    0.9718    0.1280    1.9240    0.1841"
+          - "10.0    0.9718    0.1280    1.9240    0.1841"
+          - "15.0    0.9718    0.1280    1.9240    0.1841"
+          - "20.0    0.9718    0.1280    1.9240    0.1841"
