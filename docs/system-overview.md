@@ -12,6 +12,8 @@
 
 ## High Level Connections scheme
 ![logic-connection-scheme](/docs/media/logic-connection-scheme.jpeg)
+### CANBus & CANOPEN
+![CANBUS-CANOPEN-scheme](/docs/media/CANBUS-CANOPEN-scheme.png)
 
 # Software
 TODO: rifare sta roba, fa schifo e l'ho usata come placeholder
