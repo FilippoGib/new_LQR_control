@@ -9,3 +9,5 @@ This is the wiki containing all the documentation regarding the software stack r
 - #### [Build instruction](https://github.com/MMR-electric-driverless/orin-drive/tree/main/docs/setup.md)
 - #### [Codebase Documentation](https://github.com/MMR-electric-driverless/orin-drive/tree/main/docs/codebase-documentation.md)
 - ### [ROS2 Topics](https://github.com/MMR-electric-driverless/orin-drive/tree/main/docs/topics.md)
+
+Dentro la cartella backups_configs trovate file di config vari (esempio: Xsens) 
