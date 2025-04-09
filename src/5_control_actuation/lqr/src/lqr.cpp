@@ -105,10 +105,21 @@ size_t get_closest_point(const PointCloud& cloud, const Eigen::Vector2f& odometr
     return ret_index[0];
 }
 
-double distance(const Eigen::Vector2f &a, const Eigen::Vector2f &b) {
+double points_distance(const Eigen::Vector2f &a, const Eigen::Vector2f &b) {
     double dx = a[0] - b[0];
     double dy = a[1] - b[1];
     return std::sqrt(dx * dx + dy * dy);
+}
+
+double line_distance(const Eigen::Vector2f &point, const Eigen::Vector2f &nearest_point, double line_angle) 
+{
+    Eigen::Vector2f diff = point - nearest_point;
+    
+    double sinTheta = std::sin(line_angle);
+    double cosTheta = std::cos(line_angle);
+    
+    double distance = std::abs(diff.x() * (-sinTheta) + diff.y() * cosTheta);
+    return distance;
 }
 
 double signed_distance(double Ax, double Ay, double Bx, double By, double theta) {
@@ -118,6 +129,11 @@ double signed_distance(double Ax, double Ay, double Bx, double By, double theta)
     Eigen::Vector3f B(Bx - Ax, By - Ay, 0);
     
     Eigen::Vector3f cross = crossProduct(A, B);
+
+    const double epsilon = 1e-9;
+    if (std::abs(cross[2]) < epsilon) {
+        return 0.0; // Avoid division by zero
+    }
     
     return cross[2]/std::abs(cross[2]);
 }
@@ -170,8 +186,8 @@ std::vector<double> get_tangent_angles(std::vector<Eigen::Vector2f> points)
     }
 
      for (size_t i = 1; i < points.size() - 1; ++i) {
-        double d1 = distance(points[i], points[i - 1]);
-        double d2 = distance(points[i + 1], points[i]);
+        double d1 = points_distance(points[i], points[i - 1]);
+        double d2 = points_distance(points[i + 1], points[i]);
         double ds = d1 + d2;  // Total distance over the two segments
 
         if (ds == 0) {
@@ -222,14 +238,6 @@ std::vector<double> get_csv_column(const std::string& trajectory_csv, int column
     
     return values;
 }
-
-// double get_longitudinal_speed(double yaw, const nav_msgs::msg::Odometry::SharedPtr msg)
-// {
-//     Eigen::Rotation2D<double> rot(yaw);    // rotation transformation local -> global
-//     Eigen::Vector2d v(msg->twist.twist.linear.x, msg->twist.twist.linear.y);
-//     Eigen::Vector2d v_new = rot.inverse() * v;  // with the inverse rotation matrix global -> local
-//     return v_new.x();
-// }
 
 std::tuple<double, Eigen::Vector2d> get_lateral_deviation_components(const double angular_dev, const double closest_point_tangent, const nav_msgs::msg::Odometry::SharedPtr msg)
 {
@@ -333,6 +341,9 @@ void LQR::load_parameters()
     this->declare_parameter<double>("C_alpha_rear", 0.0);
     C_alpha_rear = this->get_parameter("C_alpha_rear").get_value<double>();
 
+    this->declare_parameter<double>("steering_ratio", 0.0);
+    steering_ratio = this->get_parameter("steering_ratio").get_value<double>();
+
     // PID parameters
     this->declare_parameter<double>("PID_p", 0.0);
     m_p = this->get_parameter("PID_p").get_value<double>();
@@ -420,16 +431,16 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     size_t closest_point_index = get_closest_point(m_cloud, odometry_pose);
     Eigen::Vector2f closest_point = m_cloud.pts[closest_point_index];
 
-    // Calculate lateral deviation as distance between two points
-    double lateral_deviation = distance(odometry_pose, closest_point);
+    // Calculate lateral deviation as distance between two points just to check if the closest point is correct
+    double lateral_deviation = points_distance(odometry_pose, closest_point);
 
     // I have found the closest point on the trajectory to the odometry pose but I don't trust the result so I check if the previous or next point are closer to the odometry
     while(1)
     {
         if(closest_point_index > 0 && closest_point_index < m_cloud.pts.size() - 1)
         {
-            double previuous_point_lateral_deviation = distance(odometry_pose, m_cloud.pts[closest_point_index - 1]);
-            double next_point_lateral_deviation = distance(odometry_pose, m_cloud.pts[closest_point_index + 1]);
+            double previuous_point_lateral_deviation = points_distance(odometry_pose, m_cloud.pts[closest_point_index - 1]);
+            double next_point_lateral_deviation = points_distance(odometry_pose, m_cloud.pts[closest_point_index + 1]);
             if(previuous_point_lateral_deviation < lateral_deviation)
             {
                 closest_point_index = closest_point_index - 1;
@@ -471,6 +482,9 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
 
     double closest_point_tangent = m_points_tangents[closest_point_index];
 
+    // Now I want to calculate the lateral deviation again but this time not as the distance between two points but as the distance between the odometry pose and tangengt line of the closest point
+    lateral_deviation = line_distance(odometry_pose, closest_point, closest_point_tangent);
+
     // Now i can use the dot product to compute a signed distance and use this sign to establish where I am w.r.t. the race line
     double lateral_position = signed_distance(closest_point[0], closest_point[1], odometry_pose[0], odometry_pose[1], closest_point_tangent);
     lateral_deviation*=lateral_position;
@@ -504,6 +518,11 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     double delta_f = get_feedforward_term(K_3, m_mass, Vx, 1/R_c, front_length, rear_length, C_alpha_rear, C_alpha_front);
     
     steering = steering - delta_f; // this is my actual steering target
+
+    // NOTICE: the steering angle we just computed is the steering angle requested at the wheels. We need to actuate the steering wheel
+    // How much do we have to turn the steering wheel to get the desired steering angle at the wheels?
+
+    steering = steering * steering_ratio;
 
     // NOW WE HAVE TO CALCULATE THE LONGITUDINAL CONTROL
     double target_speed = 0.0;

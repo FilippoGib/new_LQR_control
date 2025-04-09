@@ -59,6 +59,7 @@ install(FILES
   circuits/varano_autocross.csv
   circuits/varano_autocross_x_y_r_v.csv
   circuits/varano_x_y_r_v.csv
+  circuits/rettilineo.csv
   DESTINATION share/${PROJECT_NAME}
 )
 
