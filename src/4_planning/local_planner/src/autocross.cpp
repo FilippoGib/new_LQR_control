@@ -96,10 +96,19 @@ void AutocrossPlanner::slamConesCallback(visualization_msgs::msg::Marker::Shared
     }
     return;
 	}
-  // Publish partial
+
+  // Publish partial centerline only if it is not empty
   else
   {
-    this->centerLinePub->publish(this->wayComputer->getPathCenterLine());
+    visualization_msgs::msg::Marker current_centerline = this->wayComputer->getPathCenterLine();
+    if(current_centerline.points.size() > 0)
+    {
+      this->centerLinePub->publish(current_centerline);
+    }
+    else
+    {
+      RCLCPP_INFO(rclcpp::get_logger(""), "[local_planner] current centerline is empty");
+    }
   }
 
   Time::tock("computation"); // End measuring time
