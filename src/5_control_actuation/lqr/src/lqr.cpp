@@ -138,23 +138,15 @@ double signed_distance(double Ax, double Ay, double Bx, double By, double theta)
     return cross[2]/std::abs(cross[2]);
 }
 
-double get_angular_deviation(double angle1, double angle2) {
-    // Compute the raw difference, then shift by π.
-    double diff = angle2 - angle1 + M_PI;
+double get_angular_deviation(double a, double b) 
+{
+        double diff = std::fmod(b - a, 2.0 * M_PI);
+        if (diff > M_PI)
+            diff -= 2.0 * M_PI;
+        else if (diff < -M_PI)
+            diff += 2.0 * M_PI;
+        return diff;
     
-    // Use fmod to wrap the value into the range [0, 2π)
-    diff = std::fmod(diff, 2 * M_PI);
-    
-    // fmod can return a negative result; adjust if necessary.
-    if (diff < 0)
-        diff += 2 * M_PI;
-    
-    // Shift back by π to get a value in [-π, π]
-    diff -= M_PI;
-    
-    // Return the absolute value to get the magnitude in [0, π]
-    //return std::abs(diff);
-    return diff;
 }
 
 double get_yaw(const nav_msgs::msg::Odometry::SharedPtr msg) {
@@ -472,12 +464,46 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     {
         m_points_tangents = get_tangent_angles(m_cloud.pts); 
 
+        if(m_is_DEBUG) // dump computed tangents to a .csv file where the columns are x,y,tangent_angle in that point, override old file
+        {
+            auto now = std::chrono::system_clock::now();
+            auto now_time_t = std::chrono::system_clock::to_time_t(now);
+            std::stringstream filename;
+            filename << "tangents_log_" << std::put_time(std::localtime(&now_time_t), "%Y%m%d_%H%M%S") << ".csv";
+
+            std::ofstream file(filename.str());
+            if (file.is_open()) {
+            file << "x,y,tangent_angle\n";
+            for (size_t i = 0; i < m_cloud.pts.size(); ++i) {
+                file << m_cloud.pts[i][0] << "," << m_cloud.pts[i][1] << "," << m_points_tangents[i] << "\n";
+            }
+            file.close();
+            } else {
+            RCLCPP_ERROR(this->get_logger(), "Could not open %s for writing", filename.str().c_str());
+            }
+        }
+
         std::string package_share_directory = ament_index_cpp::get_package_share_directory("lqr");
         std::string trajectory_csv = m_csv_filename;
         m_points_curvature_radius = get_csv_column(package_share_directory+trajectory_csv, 2); // for now let's say that the curvature is stored in the 3rd column of the csv file
         m_points_target_speed = get_csv_column(package_share_directory+trajectory_csv, 3); // for now let's say that the target speed is stored in the 4th column of the csv file
 
         m_is_loaded = true;
+    }
+
+    if(m_is_DEBUG)
+    {
+        // dump the current odometry to a file with columns: odom.x, odom.y, odom.yaw
+        std::stringstream filename;
+        filename << "odometry_log.csv";
+
+        std::ofstream file(filename.str(), std::ios::app); // Open in append mode
+        if (file.is_open()) {
+            file << odometry_pose[0] << "," << odometry_pose[1] << "," << odometry.yaw << "\n";
+            file.close();
+        } else {
+            RCLCPP_ERROR(this->get_logger(), "Could not open %s for writing", filename.str().c_str());
+        }
     }
 
     double closest_point_tangent = m_points_tangents[closest_point_index];

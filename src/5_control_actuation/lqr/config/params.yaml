@@ -4,9 +4,9 @@ lqr_node:
         is_debug_mode: true
         is_first_lap:  false
         is_constant_speed: true
-        target_speed: 2.0
+        target_speed: 3.0
         # SUPPORT FILES
-        trajectory_filename: "/varano_autocross_x_y_r_v.csv"
+        trajectory_filename: "/varano_x_y_r_v.csv"
         odom_topic: "/simulation_state"
         control_topic: "/car_controls"
         debug_topic: "/debug/odometry"
@@ -18,14 +18,14 @@ lqr_node:
         rear_length: 0.7238
         C_alpha_front: 1e4
         C_alpha_rear: 1e4
-        steering_ratio: 1.0
+        steering_ratio: 3.5
         # PID parameters
         PID_p:  1.0
         PID_i:  0.0
         PID_d:  0.0
         # CONTROL VECTORS 
         vectors_k:
-          - "5.00    3.9045    0.9014    3.2449    0.2594"
-          - "10.0    3.9045    0.9014    3.2449    0.2594"
-          - "15.0    3.9045    0.9014    3.2449    0.2594"
-          - "20.0    3.9045    0.9014    3.2449    0.2594"
+          - "5.00   0.7218    0.0869    1.3033    0.0035"
+          - "10.0   0.7218    0.0869    1.3033    0.0035"
+          - "15.0   0.7218    0.0869    1.3033    0.0035"
+          - "20.0   0.7218    0.0869    1.3033    0.0035"
