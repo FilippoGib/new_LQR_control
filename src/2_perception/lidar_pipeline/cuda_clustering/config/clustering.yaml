@@ -1,0 +1,18 @@
+#params from adaprive clustering 
+/clustering_node:
+  ros__parameters:
+    input_topic: "/patchworkpp/nonground"
+    frame_id: "hesai_lidar"
+    minClusterSize : 5        # Minimum cluster size to filter out noise
+    maxClusterSize : 200        # Maximum size for large objects
+    voxelX: 0.5               #// Down-sampling resolution in X (meters)
+    voxelY: 0.5                  #// Down-sampling resolution in Y (meters)
+    voxelZ: 0.3                #// Down-sampling resolution in Z (meters)
+    countThreshold: 5         #  // Minimum points per voxel
+
+    clusterMaxX: 0.3
+    clusterMaxY: 0.3
+    clusterMaxZ: 0.4
+    maxHeight: 1.0          #of the lowest point
+
+    filterOnZ: false
