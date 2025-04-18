@@ -90,10 +90,7 @@ void AutocrossPlanner::slamConesCallback(visualization_msgs::msg::Marker::Shared
 	{
 		
 		this->idle = true;
-    for (int i = 0; i < 5; i ++)
-		{
-			this->centerLineCompletedPub->publish(this->wayComputer->getPathCenterLine()); // trancientlocal topic
-    }
+		this->centerLineCompletedPub->publish(this->wayComputer->getPathCenterLine()); // trancientlocal topic
     return;
 	}
 
