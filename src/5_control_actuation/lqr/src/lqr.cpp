@@ -242,7 +242,8 @@ std::tuple<double, Eigen::Vector2d> get_lateral_deviation_components(const doubl
     return {lateral_deviation_speed, lateral_deviation_speed * d_perp};
 }
 
-double get_feedforward_term(const double K_3, const double mass, const double long_speed, const double curvature, const double frontal_lenght, const double rear_lenght, const double C_alpha_rear, const double C_alpha_front){
+double get_feedforward_term(const double K_3, const double mass, const double long_speed, const double curvature, const double frontal_lenght, const double rear_lenght, const double C_alpha_rear, const double C_alpha_front)
+{
     double df_c1 = (mass*std::pow(long_speed,2))/(curvature*(rear_lenght+frontal_lenght));
     double df_c2 = (frontal_lenght / (2*C_alpha_front))-(rear_lenght / (2*C_alpha_rear)) + (frontal_lenght / (2*C_alpha_rear))*K_3;
     double df_c3 = (rear_lenght+frontal_lenght)/curvature;
@@ -277,7 +278,7 @@ double LQR::calculate_torque(double speed_in_module, double target_speed)
 {
     double speed_difference = target_speed - speed_in_module;
     m_cumulative_error += speed_difference;
-    return speed_difference * m_p + m_i * m_cumulative_error; // m_d * (speed_difference - m_previous_speed_difference); lets just use a PI for now
+    return speed_difference * m_p + m_i * m_cumulative_error; // + m_d * (speed_difference - m_previous_speed_difference); lets just use a PI for now
 }
 
 void LQR::load_parameters()

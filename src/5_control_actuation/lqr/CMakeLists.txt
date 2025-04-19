@@ -23,10 +23,17 @@ find_package(visualization_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(Boost REQUIRED)
 
 include_directories(include)
+include_directories(${Boost_INCLUDE_DIRS})
 
 add_library(lqr src/lqr.cpp)
+
+target_include_directories(lqr
+  PRIVATE
+  ${Boost_INCLUDE_DIRS}
+)
 
 ament_target_dependencies(
   lqr 
@@ -40,6 +47,11 @@ ament_target_dependencies(
 )
 
 add_executable(lqr_node src/lqr_node.cpp)
+
+target_include_directories(lqr_node
+  PRIVATE
+  ${Boost_INCLUDE_DIRS}
+)
 
 target_link_libraries(
   lqr_node

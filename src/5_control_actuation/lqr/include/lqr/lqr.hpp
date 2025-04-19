@@ -7,6 +7,7 @@
 #include <visualization_msgs/msg/marker.hpp>
 #include <eigen3/Eigen/Geometry>
 #include <vector>
+#include "spline_path.hpp"
 
 #define _USE_MATH_DEFINES
 
@@ -74,6 +75,8 @@ private:
     std::vector<double> m_points_curvature_radius; // calculated offline on matlab for now (we will have to implement this ourselves)
     std::vector<double> m_points_target_speed; // calculated offline on matlab always
     PointCloud m_cloud;
+    lqr::SplinePath m_spline_path;
+    std::vector<double> m_u;
     bool m_is_first_lap; // for now we statically decide if we want to use the partial trajectory or we want to use the global trajectory
     bool m_is_loaded;
     bool m_is_DEBUG;
