@@ -1,17 +1,4 @@
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <stdexcept>
-#include <chrono>
-#include <filesystem>
-#include <math.h>
-#include <eigen3/Eigen/Geometry>
-#include <nav_msgs/msg/odometry.hpp>
-#include <ament_index_cpp/get_package_share_directory.hpp>
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf2/LinearMath/Matrix3x3.h>
 #include "lqr/lqr.hpp"
-#include "nanoflann/nanoflann.hpp"
 
 Eigen::Vector3f crossProduct(const Eigen::Vector3f& A, const Eigen::Vector3f& B) {
     return { 
@@ -417,8 +404,39 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     {
         std::string package_share_directory = ament_index_cpp::get_package_share_directory("lqr");
         std::string trajectory_csv = m_csv_filename;
-        m_cloud = get_trajectory(package_share_directory+trajectory_csv);
-    }
+
+        m_cloud = get_trajectory(package_share_directory+trajectory_csv); // get the trajectory from the csv file
+        m_spline = lqr::SplinePath(m_cloud.pts); // initialize the spline with the trajectory
+
+        // Before findinge the closest point i resample the trajectory to make it more accurate
+        const auto& raw_s = m_spline.params();      // size = raw_pts.size()
+        double s_min = raw_s.front();
+        double s_max = raw_s.back();
+
+        size_t factor = 50; // resampling factor, can be changed arbitrarily
+        size_t M = raw_s.size() * factor;
+        double ds = (s_max - s_min) / double(M - 1);
+
+        m_cloud.pts.clear();
+        m_cloud.pts.reserve(M);
+        m_u.clear();
+        m_u.reserve(M);
+
+        for (size_t i = 0; i < M; ++i) 
+        {
+          double u = s_min + i * ds;                  // parameter along [s_min, s_max]
+
+          if (i == M-1) {
+            u = s_max;
+          } else {
+            u = std::min(std::max(u, s_min), s_max);
+          }
+
+          Eigen::Vector2f P = m_spline.evaluate(u);   // (x,y) on the curve
+          m_cloud.pts.push_back(P);
+          m_u.push_back(u);
+        }
+    }    
 
     // Find closest point to trajectory using KD-Tree from NanoFLANN
     size_t closest_point_index = get_closest_point(m_cloud, odometry_pose);
@@ -465,24 +483,24 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     {
         m_points_tangents = get_tangent_angles(m_cloud.pts); 
 
-        if(m_is_DEBUG) // dump computed tangents to a .csv file where the columns are x,y,tangent_angle in that point, override old file
-        {
-            auto now = std::chrono::system_clock::now();
-            auto now_time_t = std::chrono::system_clock::to_time_t(now);
-            std::stringstream filename;
-            filename << "tangents_log_" << std::put_time(std::localtime(&now_time_t), "%Y%m%d_%H%M%S") << ".csv";
+        // if(m_is_DEBUG) // dump computed tangents to a .csv file where the columns are x,y,tangent_angle in that point, override old file
+        // {
+        //     auto now = std::chrono::system_clock::now();
+        //     auto now_time_t = std::chrono::system_clock::to_time_t(now);
+        //     std::stringstream filename;
+        //     filename << "tangents_log_" << std::put_time(std::localtime(&now_time_t), "%Y%m%d_%H%M%S") << ".csv";
 
-            std::ofstream file(filename.str());
-            if (file.is_open()) {
-            file << "x,y,tangent_angle\n";
-            for (size_t i = 0; i < m_cloud.pts.size(); ++i) {
-                file << m_cloud.pts[i][0] << "," << m_cloud.pts[i][1] << "," << m_points_tangents[i] << "\n";
-            }
-            file.close();
-            } else {
-            RCLCPP_ERROR(this->get_logger(), "Could not open %s for writing", filename.str().c_str());
-            }
-        }
+        //     std::ofstream file(filename.str());
+        //     if (file.is_open()) {
+        //     file << "x,y,tangent_angle\n";
+        //     for (size_t i = 0; i < m_cloud.pts.size(); ++i) {
+        //         file << m_cloud.pts[i][0] << "," << m_cloud.pts[i][1] << "," << m_points_tangents[i] << "\n";
+        //     }
+        //     file.close();
+        //     } else {
+        //     RCLCPP_ERROR(this->get_logger(), "Could not open %s for writing", filename.str().c_str());
+        //     }
+        // }
 
         std::string package_share_directory = ament_index_cpp::get_package_share_directory("lqr");
         std::string trajectory_csv = m_csv_filename;
@@ -538,13 +556,13 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     double steering = -optimal_control_vector.dot(x); 
 
     // Now we need to calculate Vx and and the curvature radious
-    double Vx = msg->twist.twist.linear.x;
-    double R_c = m_points_curvature_radius[closest_point_index];
+    // double Vx = msg->twist.twist.linear.x;
+    // double R_c = m_points_curvature_radius[closest_point_index];
 
     // Now we compute the feedforward term
-    double delta_f = get_feedforward_term(K_3, m_mass, Vx, 1/R_c, front_length, rear_length, C_alpha_rear, C_alpha_front);
+    double delta_f = 0.0;/*get_feedforward_term(K_3, m_mass, Vx, 1/R_c, front_length, rear_length, C_alpha_rear, C_alpha_front);*/
     
-    steering = steering - delta_f; // this is my actual steering target
+    steering = steering /*- delta_f*/; // this is my actual steering target
 
     // NOTICE: the steering angle we just computed is the steering angle requested at the wheels. We need to actuate the steering wheel
     // How much do we have to turn the steering wheel to get the desired steering angle at the wheels?

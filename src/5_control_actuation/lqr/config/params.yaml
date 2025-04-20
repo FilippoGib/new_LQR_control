@@ -6,7 +6,7 @@ lqr_node:
         is_constant_speed: true
         target_speed: 3.0
         # SUPPORT FILES
-        trajectory_filename: "/xy_int.csv"
+        trajectory_filename: "/varano_x_y_r_v.csv"
         odom_topic: "/simulation_state"
         control_topic: "/car_controls"
         debug_topic: "/debug/odometry"
@@ -25,7 +25,7 @@ lqr_node:
         PID_d:  0.0
         # CONTROL VECTORS 
         vectors_k:
-          - "5.00   2.3443    0.1378    0.8639    0.1094"
-          - "10.0   2.3443    0.1378    0.8639    0.1094"
-          - "15.0   2.3443    0.1378    0.8639    0.1094"
-          - "20.0   2.3443    0.1378    0.8639    0.1094"
+          - "5.00    0.9529    0.1265    1.7064    0.1080"
+          - "10.0    0.9529    0.1265    1.7064    0.1080"
+          - "15.0    0.9529    0.1265    1.7064    0.1080"
+          - "20.0    0.9529    0.1265    1.7064    0.1080"

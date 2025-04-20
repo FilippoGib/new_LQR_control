@@ -2,34 +2,34 @@
 
 #include <vector>
 #include <cmath>
-#include <math.h>
 #include <limits>
 #include <optional>
+#include <eigen3/Eigen/Geometry>
 #include <boost/math/interpolators/pchip.hpp>
 
-namespace lqr{
-struct Point { double x, y; };
+namespace lqr {
 
 class SplinePath {
 public:
     // Empty default constructor
     SplinePath() = default;
-    // Construct from raw, non-uniformly spaced points
-    SplinePath(const std::vector<Point>& pts) {
+
+    // Construct from raw, non-uniformly spaced points (Eigen::Vector2f)
+    SplinePath(const std::vector<Eigen::Vector2f>& pts) {
         const size_t N = pts.size();
         s_.resize(N);
         s_[0] = 0.0;
         for (size_t i = 1; i < N; ++i) {
-            double dx = pts[i].x - pts[i-1].x;
-            double dy = pts[i].y - pts[i-1].y;
+            double dx = static_cast<double>(pts[i].x() - pts[i-1].x());
+            double dy = static_cast<double>(pts[i].y() - pts[i-1].y());
             s_[i] = s_[i-1] + std::hypot(dx, dy);
         }
 
-        // Extract x and y into separate vectors
+        // Extract x and y into separate double vectors
         std::vector<double> xs(N), ys(N);
         for (size_t i = 0; i < N; ++i) {
-            xs[i] = pts[i].x;
-            ys[i] = pts[i].y;
+            xs[i] = static_cast<double>(pts[i].x());
+            ys[i] = static_cast<double>(pts[i].y());
         }
 
         double nan = std::numeric_limits<double>::quiet_NaN();
@@ -44,8 +44,10 @@ public:
     }
 
     /// Evaluate (x,y) at parameter u
-    Point evaluate(double u) const {
-        return { (*spline_x_)(u), (*spline_y_)(u) };
+    Eigen::Vector2f evaluate(double u) const {
+        float x = static_cast<float>((*spline_x_)(u));
+        float y = static_cast<float>((*spline_y_)(u));
+        return Eigen::Vector2f(x, y);
     }
 
     /// Compute yaw = atan2(dy/du, dx/du)
@@ -59,9 +61,9 @@ public:
     const std::vector<double>& params() const { return s_; }
 
 private:
-    std::vector<double> s_;
+    std::vector<double> s_;  // chord-length parameters
     std::optional<boost::math::interpolators::pchip<std::vector<double>>> spline_x_;
     std::optional<boost::math::interpolators::pchip<std::vector<double>>> spline_y_;
 };
 
-}
+} // namespace lqr

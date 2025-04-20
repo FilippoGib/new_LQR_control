@@ -2,12 +2,26 @@
 #define LQR_HPP_
 
 #include <rclcpp/rclcpp.hpp>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <stdexcept>
+#include <chrono>
+#include <filesystem>
+#include <math.h>
+#include <ament_index_cpp/get_package_share_directory.hpp>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
+
 #include <nav_msgs/msg/odometry.hpp>
 #include <ackermann_msgs/msg/ackermann_drive_stamped.hpp>
 #include <visualization_msgs/msg/marker.hpp>
+
 #include <eigen3/Eigen/Geometry>
 #include <vector>
+
 #include "spline_path.hpp"
+#include "nanoflann/nanoflann.hpp"
 
 #define _USE_MATH_DEFINES
 
@@ -75,7 +89,7 @@ private:
     std::vector<double> m_points_curvature_radius; // calculated offline on matlab for now (we will have to implement this ourselves)
     std::vector<double> m_points_target_speed; // calculated offline on matlab always
     PointCloud m_cloud;
-    lqr::SplinePath m_spline_path;
+    lqr::SplinePath m_spline;
     std::vector<double> m_u;
     bool m_is_first_lap; // for now we statically decide if we want to use the partial trajectory or we want to use the global trajectory
     bool m_is_loaded;
