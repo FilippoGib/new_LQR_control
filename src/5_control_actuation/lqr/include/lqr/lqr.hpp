@@ -95,6 +95,7 @@ private:
     bool m_is_constant_speed;
     double m_target_speed;
     int m_trajectory_oversampling_factor;
+    double m_ds;
     std::string m_csv_filename;
 
     // car physical parameters

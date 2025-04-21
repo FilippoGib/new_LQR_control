@@ -148,43 +148,6 @@ double get_yaw(const nav_msgs::msg::Odometry::SharedPtr msg) {
     return yaw;
 }
 
-std::vector<double> get_tangent_angles(std::vector<Eigen::Vector2f> points)
-{
-    std::vector<double> tangent_angles(points.size());
-    
-    if (points.size() >= 2) {
-        // First point: forward difference.
-        Eigen::Vector2f diff = subtract(points[1], points[0]);
-        Eigen::Vector2f tanVec = normalize(diff);
-        tangent_angles[0] = std::atan2(tanVec[1], tanVec[0]);
-
-        // Last point: backward difference.
-        diff = subtract(points.back(), points[points.size() - 2]);
-        tanVec = normalize(diff);
-        tangent_angles.back() = std::atan2(tanVec[1], tanVec[0]);
-    }
-
-     for (size_t i = 1; i < points.size() - 1; ++i) {
-        double d1 = points_distance(points[i], points[i - 1]);
-        double d2 = points_distance(points[i + 1], points[i]);
-        double ds = d1 + d2;  // Total distance over the two segments
-
-        if (ds == 0) {
-            tangent_angles[i] = 0;  // Fallback if points coincide
-        } else {
-            // Compute the central difference divided by the total arc length.
-            Eigen::Vector2f diff = {
-                (points[i + 1][0] - points[i - 1][0]) / ds,
-                (points[i + 1][1] - points[i - 1][1]) / ds
-            };
-            Eigen::Vector2f tanVec = normalize(diff);
-            tangent_angles[i] = std::atan2(tanVec[1], tanVec[0]);
-        }
-    }
-
-    return tangent_angles;
-}
-
 std::vector<double> get_csv_column(const std::string& trajectory_csv, int column)
 {
     std::vector<double> values;
@@ -229,12 +192,12 @@ std::tuple<double, Eigen::Vector2d> get_lateral_deviation_components(const doubl
     return {lateral_deviation_speed, lateral_deviation_speed * d_perp};
 }
 
-double get_feedforward_term(const double K_3, const double mass, const double long_speed, const double curvature, const double frontal_lenght, const double rear_lenght, const double C_alpha_rear, const double C_alpha_front)
+double get_feedforward_term(const double K_3, const double mass, const double long_speed, const double radius, const double frontal_lenght, const double rear_lenght, const double C_alpha_rear, const double C_alpha_front)
 {
-    double df_c1 = (mass*std::pow(long_speed,2))/(curvature*(rear_lenght+frontal_lenght));
+    double df_c1 = (mass*std::pow(long_speed,2))/(radius*(rear_lenght+frontal_lenght));
     double df_c2 = (frontal_lenght / (2*C_alpha_front))-(rear_lenght / (2*C_alpha_rear)) + (frontal_lenght / (2*C_alpha_rear))*K_3;
-    double df_c3 = (rear_lenght+frontal_lenght)/curvature;
-    double df_c4 = (rear_lenght/curvature)*K_3;
+    double df_c3 = (rear_lenght+frontal_lenght)/radius;
+    double df_c4 = (rear_lenght/radius)*K_3;
     return df_c1*df_c2+df_c3-df_c4;
 }
 
@@ -417,7 +380,7 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
 
         size_t factor = m_trajectory_oversampling_factor;
         size_t M = raw_s.size() * factor;
-        double ds = (s_max - s_min) / double(M - 1);
+        m_ds = (s_max - s_min) / double(M - 1);
 
         m_cloud.pts.clear();
         m_cloud.pts.reserve(M);
@@ -426,17 +389,19 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
 
         for (size_t i = 0; i < M; ++i) 
         {
-          double u = s_min + i * ds;                  
-
-          if (i == M-1) {
-            u = s_max;
-          } else {
-            u = std::min(std::max(u, s_min), s_max);
-          }
-
-          Eigen::Vector2f P = m_spline.evaluate(u);
-          m_cloud.pts.push_back(P);
-          m_u.push_back(u);
+            double u;
+            if (i + 1 < M) {
+                u = s_min + m_ds * double(i);
+            } else {
+                u = s_max;
+            }
+        
+            // manual clamp
+            if (u < s_min) u = s_min;
+            else if (u > s_max) u = s_max;
+        
+            m_u.push_back(u);
+            m_cloud.pts.push_back(m_spline.evaluate(u));
         }
     }    
 
@@ -534,12 +499,12 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
 
     // Now we need to calculate Vx and and the curvature radious
     double Vx = msg->twist.twist.linear.x;
-    // double R_c = m_points_curvature_radius[closest_point_index];
+    double R_c = m_spline.radius(u_nearest, m_ds);
 
     // Now we compute the feedforward term
-    double delta_f = 0.0;/*get_feedforward_term(K_3, m_mass, Vx, 1/R_c, front_length, rear_length, C_alpha_rear, C_alpha_front);*/
+    double delta_f = get_feedforward_term(K_3, m_mass, Vx, R_c, front_length, rear_length, C_alpha_rear, C_alpha_front);
     
-    steering = steering /*- delta_f*/; // this is my actual steering target
+    steering = steering - delta_f; // this is my actual steering target at the wheel
 
     // NOTICE: the steering angle we just computed is the steering angle requested at the wheels. We need to actuate the steering wheel
     // How much do we have to turn the steering wheel to get the desired steering angle at the wheels?

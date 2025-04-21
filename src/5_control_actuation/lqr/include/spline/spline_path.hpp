@@ -45,22 +45,61 @@ public:
 
     /// Evaluate (x,y) at parameter u
     Eigen::Vector2f evaluate(double u) const {
-        float x = static_cast<float>((*spline_x_)(u));
-        float y = static_cast<float>((*spline_y_)(u));
+        u = clamp(u);
+        float x = static_cast<float>( (*spline_x_)(u) );
+        float y = static_cast<float>( (*spline_y_)(u) );
         return Eigen::Vector2f(x, y);
     }
 
     /// Compute yaw = atan2(dy/du, dx/du)
     double yaw(double u) const {
+        u = clamp(u);
         double dx = spline_x_->prime(u);
         double dy = spline_y_->prime(u);
         return std::atan2(dy, dx);
+    }
+
+    /// Approximate curvature κ(u) via centered difference of prime(), with endpoint guards
+    double curvature(double u, double h) const {
+        double u_min = s_.front();
+        double u_max = s_.back();
+        // clamp base u
+        u = clamp(u);
+        // clamp offset samples
+        double ua = u + h;
+        double ub = u - h;
+        if (ua > u_max) ua = u_max;
+        if (ub < u_min) ub = u_min;
+
+        double dx  = spline_x_->prime(u);
+        double dy  = spline_y_->prime(u);
+        double ddx = (spline_x_->prime(ua) - spline_x_->prime(ub)) / (ua - ub);
+        double ddy = (spline_y_->prime(ua) - spline_y_->prime(ub)) / (ua - ub);
+
+        double num = dx * ddy - dy * ddx;
+        double den = std::pow(dx*dx + dy*dy, 1.5);
+        return (den != 0.0) ? (num/den) : 0.0;
+    }
+
+    /// Radius of curvature R(u) = 1/|κ(u)|, or +inf if κ≈0
+    double radius(double u, double h) const {
+        double k = curvature(u, h);
+        return (std::abs(k) > 1e-12) ? (1.0/std::abs(k)) : std::numeric_limits<double>::infinity();
     }
 
     /// Access raw chord-length parameter vector
     const std::vector<double>& params() const { return s_; }
 
 private:
+    // clamp u into [s_min, s_max]
+    double clamp(double u) const {
+        double u_min = s_.front();
+        double u_max = s_.back();
+        if (u < u_min) return u_min;
+        if (u > u_max) return u_max;
+        return u;
+    }
+
     std::vector<double> s_;  // chord-length parameters
     std::optional<boost::math::interpolators::pchip<std::vector<double>>> spline_x_;
     std::optional<boost::math::interpolators::pchip<std::vector<double>>> spline_y_;
