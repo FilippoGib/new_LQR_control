@@ -20,7 +20,7 @@
 #include <eigen3/Eigen/Geometry>
 #include <vector>
 
-#include "spline_path.hpp"
+#include "spline/spline_path.hpp"
 #include "nanoflann/nanoflann.hpp"
 
 #define _USE_MATH_DEFINES
@@ -71,8 +71,8 @@ private:
     rclcpp::Subscription<visualization_msgs::msg::Marker>::SharedPtr m_global_traj_sub; // get the full trajectory once at the start of the second lap
 
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr m_debug_pub; // for visualization
-    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr m_debug_odom_pub; // for visualization
-    // N.B. this message is what the simulator needs, the actual message will be sent to the kria via can
+    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr m_debug_odom_pub; // actual state vector
+    // N.B. this message is what the simulator needs, the actual message that will be used int the car might be different
     rclcpp::Publisher<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr m_control_pub; 
     
     //topics
@@ -85,7 +85,6 @@ private:
     // class members
     std::vector<std::string> m_raw_vectors_k;
     std::vector<std::pair<double, std::vector<double>>> m_k_pair;
-    std::vector<double> m_points_tangents; // calculated by out node
     std::vector<double> m_points_curvature_radius; // calculated offline on matlab for now (we will have to implement this ourselves)
     std::vector<double> m_points_target_speed; // calculated offline on matlab always
     PointCloud m_cloud;
@@ -96,6 +95,7 @@ private:
     bool m_is_DEBUG;
     bool m_is_constant_speed;
     double m_target_speed;
+    int m_trajectory_oversampling_factor;
     std::string m_csv_filename;
 
     // car physical parameters

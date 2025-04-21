@@ -299,6 +299,9 @@ void LQR::load_parameters()
     this->declare_parameter<bool>("is_debug_mode", true);
     m_is_DEBUG = this->get_parameter("is_debug_mode").get_value<bool>();
 
+    this->declare_parameter<int>("trajectory_oversampling_factor", 1);
+    m_trajectory_oversampling_factor = this->get_parameter("trajectory_oversampling_factor").get_value<int>();
+
     // car physical parameters
     this->declare_parameter<std::vector<std::string>>("vectors_k", std::vector<std::string>{});
     m_raw_vectors_k = this->get_parameter("vectors_k").as_string_array();
@@ -413,7 +416,7 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
         double s_min = raw_s.front();
         double s_max = raw_s.back();
 
-        size_t factor = 50; // resampling factor, can be changed arbitrarily
+        size_t factor = m_trajectory_oversampling_factor; // resampling factor, can be changed arbitrarily
         size_t M = raw_s.size() * factor;
         double ds = (s_max - s_min) / double(M - 1);
 
@@ -481,7 +484,7 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     // Compute for every point on the trajectory the tangent angle
     if (!m_is_loaded) // We only want to do it once
     {
-        m_points_tangents = get_tangent_angles(m_cloud.pts); 
+        // m_points_tangents = get_tangent_angles(m_cloud.pts); I AM NOW USING THE SPLINE FOR THIS
 
         // if(m_is_DEBUG) // dump computed tangents to a .csv file where the columns are x,y,tangent_angle in that point, override old file
         // {
@@ -525,7 +528,9 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
         }
     }
 
-    double closest_point_tangent = m_points_tangents[closest_point_index];
+    // double closest_point_tangent = m_points_tangents[closest_point_index];
+    double u_nearest = m_u[closest_point_index];
+    double closest_point_tangent = m_spline.yaw(u_nearest);
 
     // Now I want to calculate the lateral deviation again but this time not as the distance between two points but as the distance between the odometry pose and tangengt line of the closest point
     lateral_deviation = line_distance(odometry_pose, closest_point, closest_point_tangent);
