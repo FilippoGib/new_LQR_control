@@ -109,7 +109,7 @@ double line_distance(const Eigen::Vector2f &point, const Eigen::Vector2f &neares
     return distance;
 }
 
-double signed_distance(double Ax, double Ay, double Bx, double By, double theta) {
+double get_sign(double Ax, double Ay, double Bx, double By, double theta) {
     
     Eigen::Vector3f A(cos(theta), sin(theta), 0);
     
@@ -399,7 +399,6 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     // Save the actual time to compute the time needed for the execution later
     auto start = std::chrono::high_resolution_clock::now();
 
-    // Get Data
     Eigen::Vector2f odometry_pose(msg->pose.pose.position.x, msg->pose.pose.position.y);
     Odometry odometry = {odometry_pose, get_yaw(msg)};
     
@@ -408,15 +407,15 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
         std::string package_share_directory = ament_index_cpp::get_package_share_directory("lqr");
         std::string trajectory_csv = m_csv_filename;
 
-        m_cloud = get_trajectory(package_share_directory+trajectory_csv); // get the trajectory from the csv file
+        m_cloud = get_trajectory(package_share_directory+trajectory_csv); // initialize the pointcloud with trajectory from .csv
         m_spline = lqr::SplinePath(m_cloud.pts); // initialize the spline with the trajectory
 
-        // Before findinge the closest point i resample the trajectory to make it more accurate
-        const auto& raw_s = m_spline.params();      // size = raw_pts.size()
+        // Before findinge the closest point I resample the trajectory to make it more accurate
+        const auto& raw_s = m_spline.params();
         double s_min = raw_s.front();
         double s_max = raw_s.back();
 
-        size_t factor = m_trajectory_oversampling_factor; // resampling factor, can be changed arbitrarily
+        size_t factor = m_trajectory_oversampling_factor;
         size_t M = raw_s.size() * factor;
         double ds = (s_max - s_min) / double(M - 1);
 
@@ -427,7 +426,7 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
 
         for (size_t i = 0; i < M; ++i) 
         {
-          double u = s_min + i * ds;                  // parameter along [s_min, s_max]
+          double u = s_min + i * ds;                  
 
           if (i == M-1) {
             u = s_max;
@@ -435,7 +434,7 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
             u = std::min(std::max(u, s_min), s_max);
           }
 
-          Eigen::Vector2f P = m_spline.evaluate(u);   // (x,y) on the curve
+          Eigen::Vector2f P = m_spline.evaluate(u);
           m_cloud.pts.push_back(P);
           m_u.push_back(u);
         }
@@ -478,37 +477,11 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
         }
     }
 
-    // At this point I have the closest point on the trajectory
-    // Now I need to find the components of the state vector of the car
-
-    // Compute for every point on the trajectory the tangent angle
-    if (!m_is_loaded) // We only want to do it once
+    if (!m_is_loaded)
     {
-        // m_points_tangents = get_tangent_angles(m_cloud.pts); I AM NOW USING THE SPLINE FOR THIS
-
-        // if(m_is_DEBUG) // dump computed tangents to a .csv file where the columns are x,y,tangent_angle in that point, override old file
-        // {
-        //     auto now = std::chrono::system_clock::now();
-        //     auto now_time_t = std::chrono::system_clock::to_time_t(now);
-        //     std::stringstream filename;
-        //     filename << "tangents_log_" << std::put_time(std::localtime(&now_time_t), "%Y%m%d_%H%M%S") << ".csv";
-
-        //     std::ofstream file(filename.str());
-        //     if (file.is_open()) {
-        //     file << "x,y,tangent_angle\n";
-        //     for (size_t i = 0; i < m_cloud.pts.size(); ++i) {
-        //         file << m_cloud.pts[i][0] << "," << m_cloud.pts[i][1] << "," << m_points_tangents[i] << "\n";
-        //     }
-        //     file.close();
-        //     } else {
-        //     RCLCPP_ERROR(this->get_logger(), "Could not open %s for writing", filename.str().c_str());
-        //     }
-        // }
-
         std::string package_share_directory = ament_index_cpp::get_package_share_directory("lqr");
         std::string trajectory_csv = m_csv_filename;
-        m_points_curvature_radius = get_csv_column(package_share_directory+trajectory_csv, 2); // for now let's say that the curvature is stored in the 3rd column of the csv file
-        m_points_target_speed = get_csv_column(package_share_directory+trajectory_csv, 3); // for now let's say that the target speed is stored in the 4th column of the csv file
+        m_points_target_speed = get_csv_column(package_share_directory+trajectory_csv, 3); // The target speed is stored in the 4th column of the csv file
 
         m_is_loaded = true;
     }
@@ -519,7 +492,7 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
         std::stringstream filename;
         filename << "odometry_log.csv";
 
-        std::ofstream file(filename.str(), std::ios::app); // Open in append mode
+        std::ofstream file(filename.str(), std::ios::app);
         if (file.is_open()) {
             file << odometry_pose[0] << "," << odometry_pose[1] << "," << odometry.yaw << "\n";
             file.close();
@@ -528,7 +501,6 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
         }
     }
 
-    // double closest_point_tangent = m_points_tangents[closest_point_index];
     double u_nearest = m_u[closest_point_index];
     double closest_point_tangent = m_spline.yaw(u_nearest);
 
@@ -536,7 +508,7 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     lateral_deviation = line_distance(odometry_pose, closest_point, closest_point_tangent);
 
     // Now i can use the dot product to compute a signed distance and use this sign to establish where I am w.r.t. the race line
-    double lateral_position = signed_distance(closest_point[0], closest_point[1], odometry_pose[0], odometry_pose[1], closest_point_tangent);
+    double lateral_position = get_sign(closest_point[0], closest_point[1], odometry_pose[0], odometry_pose[1], closest_point_tangent);
     lateral_deviation*=lateral_position;
 
     // Finally calculate the angular deviation between the odometry and the closest point on the trajectory
@@ -557,11 +529,11 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     Eigen::Vector4f optimal_control_vector = find_optimal_control_vector(speed_in_module);
     double K_3 = optimal_control_vector[2];
 
-    // Now we compute the theoretical steering
+    // Now we compute the theoretical steering at the wheel
     double steering = -optimal_control_vector.dot(x); 
 
     // Now we need to calculate Vx and and the curvature radious
-    // double Vx = msg->twist.twist.linear.x;
+    double Vx = msg->twist.twist.linear.x;
     // double R_c = m_points_curvature_radius[closest_point_index];
 
     // Now we compute the feedforward term
@@ -571,7 +543,6 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
 
     // NOTICE: the steering angle we just computed is the steering angle requested at the wheels. We need to actuate the steering wheel
     // How much do we have to turn the steering wheel to get the desired steering angle at the wheels?
-
     steering = steering * steering_ratio;
 
     // NOW WE HAVE TO CALCULATE THE LONGITUDINAL CONTROL

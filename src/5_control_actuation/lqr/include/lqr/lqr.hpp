@@ -85,7 +85,6 @@ private:
     // class members
     std::vector<std::string> m_raw_vectors_k;
     std::vector<std::pair<double, std::vector<double>>> m_k_pair;
-    std::vector<double> m_points_curvature_radius; // calculated offline on matlab for now (we will have to implement this ourselves)
     std::vector<double> m_points_target_speed; // calculated offline on matlab always
     PointCloud m_cloud;
     lqr::SplinePath m_spline;
