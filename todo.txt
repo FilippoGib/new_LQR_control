@@ -1,0 +1,1 @@
+provare a usare PCHIP per fare oversampling poi utilizzare i punti oversamplati per creare un'altra splina che ti garantisce che la derivata seconda sia continua in questo modo sai che la derivata prima (yaw) è derivabile quindi è smooth
