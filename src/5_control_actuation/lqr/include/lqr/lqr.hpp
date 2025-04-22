@@ -63,7 +63,9 @@ private:
     void initialize();
     void load_parameters();
     Eigen::Vector4f find_optimal_control_vector(double speed);
-    double calculate_torque(double speed, double target_speed);    
+    double calculate_torque(double speed, double target_speed);  
+    std::vector<double> get_points_tangents();  
+    std::vector<double> get_points_radii();
 
     // pubs and subs
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr m_odom_sub;
@@ -86,6 +88,8 @@ private:
     std::vector<std::string> m_raw_vectors_k;
     std::vector<std::pair<double, std::vector<double>>> m_k_pair;
     std::vector<double> m_points_target_speed; // calculated offline on matlab always
+    std::vector<double> m_points_tangents;
+    std::vector<double> m_points_radii;
     PointCloud m_cloud;
     lqr::SplinePath m_spline;
     std::vector<double> m_u;

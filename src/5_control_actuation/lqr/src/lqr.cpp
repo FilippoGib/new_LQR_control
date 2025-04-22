@@ -224,6 +224,30 @@ Eigen::Vector4f LQR::find_optimal_control_vector(double speed_in_module)
     return optimal_control_vector;
 }
 
+std::vector<double> LQR::get_points_tangents()
+{
+    std::vector<double> tangents;
+    for(int i = 0; i < m_cloud.pts.size(); i++)
+    {
+        double u_current = m_u[i];
+        double current_point_tangent = m_spline.yaw(u_current);
+        tangents.push_back(current_point_tangent);
+    }
+    return tangents;
+}
+
+std::vector<double> LQR::get_points_radii()
+{
+    std::vector<double> radii;
+    for(int i = 0; i < m_cloud.pts.size(); i++)
+    {
+        double u_current = m_u[i];
+        double current_point_radius = m_spline.radius(u_current, m_ds);
+        radii.push_back(current_point_radius);
+    }
+    return radii;
+}
+
 double LQR::calculate_torque(double speed_in_module, double target_speed)
 {
     double speed_difference = target_speed - speed_in_module;
@@ -447,7 +471,16 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
         std::string package_share_directory = ament_index_cpp::get_package_share_directory("lqr");
         std::string trajectory_csv = m_csv_filename;
         m_points_target_speed = get_csv_column(package_share_directory+trajectory_csv, 3); // The target speed is stored in the 4th column of the csv file
+        m_points_tangents = get_points_tangents();
+        m_points_radii = get_points_radii();
 
+        // dump oversampled trajectory to .csv file
+        std::ofstream file("spline_log.csv");
+        file << "x, y, tangent, curvature" << std::endl; 
+        for(int i = 0; i < m_cloud.pts.size(); ++i)
+        {
+            file << m_cloud.pts[i].x() << "," << m_cloud.pts[i].y() << "," << m_points_tangents[i]<< "," << m_points_radii[i] << std::endl;
+        }
         m_is_loaded = true;
     }
 
@@ -455,7 +488,7 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     {
         // dump the current odometry to a file with columns: odom.x, odom.y, odom.yaw
         std::stringstream filename;
-        filename << "odometry_log.csv";
+        filename << "odom_log.csv";
 
         std::ofstream file(filename.str(), std::ios::app);
         if (file.is_open()) {
@@ -466,8 +499,8 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
         }
     }
 
-    double u_nearest = m_u[closest_point_index];
-    double closest_point_tangent = m_spline.yaw(u_nearest);
+    // get tangent in closest point from precomputed tangents array
+    double closest_point_tangent = m_points_tangents[closest_point_index];
 
     // Now I want to calculate the lateral deviation again but this time not as the distance between two points but as the distance between the odometry pose and tangengt line of the closest point
     lateral_deviation = line_distance(odometry_pose, closest_point, closest_point_tangent);
@@ -499,7 +532,7 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
 
     // Now we need to calculate Vx and and the curvature radious
     double Vx = msg->twist.twist.linear.x;
-    double R_c = m_spline.radius(u_nearest, m_ds);
+    double R_c = m_points_radii[closest_point_index];
 
     // Now we compute the feedforward term
     double delta_f = get_feedforward_term(K_3, m_mass, Vx, R_c, front_length, rear_length, C_alpha_rear, C_alpha_front);
