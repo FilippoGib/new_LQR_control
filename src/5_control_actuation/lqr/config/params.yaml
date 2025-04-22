@@ -7,7 +7,7 @@ lqr_node:
         target_speed: 5.0
         trajectory_oversampling_factor: 100
         # SUPPORT FILES
-        trajectory_filename: "/varano_x_y_r_v.csv"
+        trajectory_filename: "circuits/track.csv"
         odom_topic: "/simulation_state"
         control_topic: "/car_controls"
         debug_topic: "/debug/odometry"

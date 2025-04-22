@@ -63,16 +63,7 @@ lqr_node
 DESTINATION lib/${PROJECT_NAME}
 )
 
-install(FILES
-  circuits/vallelunga1_circuit.csv
-  circuits/vallelunga1_circuit_undersampled.csv
-  circuits/vallelunga_with_curvatures_modified.csv
-  circuits/vallelunga_x_y_r_v.csv
-  circuits/varano_autocross.csv
-  circuits/varano_autocross_x_y_r_v.csv
-  circuits/varano_x_y_r_v.csv
-  circuits/rettilineo.csv
-  circuits/xy_int.csv
+install(DIRECTORY circuits
   DESTINATION share/${PROJECT_NAME}
 )
 
