@@ -371,38 +371,38 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
         std::string trajectory_csv = m_csv_filename;
 
         m_cloud = get_trajectory(package_share_directory+trajectory_csv); // initialize the pointcloud with trajectory from .csv
-        m_spline = lqr::SplinePath(m_cloud.pts); // initialize the spline with the trajectory
+        // m_spline = lqr::SplinePath(m_cloud.pts); // initialize the spline with the trajectory
 
-        // Before findinge the closest point I resample the trajectory to make it more accurate
-        const auto& raw_s = m_spline.params();
-        double s_min = raw_s.front();
-        double s_max = raw_s.back();
+        // // Before findinge the closest point I resample the trajectory to make it more accurate
+        // const auto& raw_s = m_spline.params();
+        // double s_min = raw_s.front();
+        // double s_max = raw_s.back();
 
-        size_t factor = m_trajectory_oversampling_factor;
-        size_t M = raw_s.size() * factor;
-        m_ds = (s_max - s_min) / double(M - 1);
+        // size_t factor = m_trajectory_oversampling_factor;
+        // size_t M = raw_s.size() * factor;
+        // m_ds = (s_max - s_min) / double(M - 1);
 
-        m_cloud.pts.clear();
-        m_cloud.pts.reserve(M);
-        m_u.clear();
-        m_u.reserve(M);
+        // m_cloud.pts.clear();
+        // m_cloud.pts.reserve(M);
+        // m_u.clear();
+        // m_u.reserve(M);
 
-        for (size_t i = 0; i < M; ++i) 
-        {
-            double u;
-            if (i + 1 < M) {
-                u = s_min + m_ds * double(i);
-            } else {
-                u = s_max;
-            }
+        // for (size_t i = 0; i < M; ++i) 
+        // {
+        //     double u;
+        //     if (i + 1 < M) {
+        //         u = s_min + m_ds * double(i);
+        //     } else {
+        //         u = s_max;
+        //     }
         
-            // manual clamp
-            if (u < s_min) u = s_min;
-            else if (u > s_max) u = s_max;
+        //     // manual clamp
+        //     if (u < s_min) u = s_min;
+        //     else if (u > s_max) u = s_max;
         
-            m_u.push_back(u);
-            m_cloud.pts.push_back(m_spline.evaluate(u));
-        }
+        //     m_u.push_back(u);
+        //     m_cloud.pts.push_back(m_spline.evaluate(u));
+        // }
     }    
 
     // Find closest point to trajectory using KD-Tree from NanoFLANN
@@ -446,28 +446,30 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     {
         std::string package_share_directory = ament_index_cpp::get_package_share_directory("lqr");
         std::string trajectory_csv = m_csv_filename;
-        m_points_target_speed = get_csv_column(package_share_directory+trajectory_csv, 3); // The target speed is stored in the 4th column of the csv file
-
+        m_points_target_speed = get_csv_column(package_share_directory+trajectory_csv, 4); // The target speed is stored in the 4th column of the csv file
+        m_points_tangents = get_csv_column(package_share_directory+trajectory_csv, 3); 
+        m_points_radii = get_csv_column(package_share_directory+trajectory_csv, 2); 
         m_is_loaded = true;
     }
+    RCLCPP_INFO(this->get_logger(), "m_point_tangets size: %zu", m_points_tangents.size());
+    RCLCPP_INFO(this->get_logger(), "m_point_radii size: %zu", m_points_radii.size());
 
     if(m_is_DEBUG)
     {
         // dump the current odometry to a file with columns: odom.x, odom.y, odom.yaw
-        std::stringstream filename;
-        filename << "odometry_log.csv";
+        // std::stringstream filename;
+        // filename << "odometry_log.csv";
 
-        std::ofstream file(filename.str(), std::ios::app);
-        if (file.is_open()) {
-            file << odometry_pose[0] << "," << odometry_pose[1] << "," << odometry.yaw << "\n";
-            file.close();
-        } else {
-            RCLCPP_ERROR(this->get_logger(), "Could not open %s for writing", filename.str().c_str());
-        }
+        // std::ofstream file(filename.str(), std::ios::app);
+        // if (file.is_open()) {
+        //     file << odometry_pose[0] << "," << odometry_pose[1] << "," << odometry.yaw << "\n";
+        //     file.close();
+        // } else {
+        //     RCLCPP_ERROR(this->get_logger(), "Could not open %s for writing", filename.str().c_str());
+        // }
     }
 
-    double u_nearest = m_u[closest_point_index];
-    double closest_point_tangent = m_spline.yaw(u_nearest);
+    double closest_point_tangent = m_points_tangents[closest_point_index];
 
     // Now I want to calculate the lateral deviation again but this time not as the distance between two points but as the distance between the odometry pose and tangengt line of the closest point
     lateral_deviation = line_distance(odometry_pose, closest_point, closest_point_tangent);
@@ -499,7 +501,7 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
 
     // Now we need to calculate Vx and and the curvature radious
     double Vx = msg->twist.twist.linear.x;
-    double R_c = m_spline.radius(u_nearest, m_ds);
+    double R_c = m_points_radii[closest_point_index];
 
     // Now we compute the feedforward term
     double delta_f = get_feedforward_term(K_3, m_mass, Vx, R_c, front_length, rear_length, C_alpha_rear, C_alpha_front);

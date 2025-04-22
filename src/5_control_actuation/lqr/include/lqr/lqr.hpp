@@ -89,6 +89,8 @@ private:
     PointCloud m_cloud;
     lqr::SplinePath m_spline;
     std::vector<double> m_u;
+    std::vector<double> m_points_tangents;
+    std::vector<double> m_points_radii;
     bool m_is_first_lap; // for now we statically decide if we want to use the partial trajectory or we want to use the global trajectory
     bool m_is_loaded;
     bool m_is_DEBUG;
