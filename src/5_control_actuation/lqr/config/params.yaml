@@ -6,6 +6,7 @@ lqr_node:
         is_constant_speed: true
         target_speed: 5.0
         trajectory_oversampling_factor: 100
+        search_radius: 3.0 # will be squared
         # SUPPORT FILES
         trajectory_filename: "/circuits/track.csv"
         odom_topic: "/simulation_state"

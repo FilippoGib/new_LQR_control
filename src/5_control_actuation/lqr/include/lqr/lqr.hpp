@@ -54,6 +54,14 @@ public:
     LQR();
 
 private:
+
+    using KDTreeType = nanoflann::KDTreeSingleIndexAdaptor<
+    nanoflann::L2_Simple_Adaptor<double, PointCloud>,
+    PointCloud,
+    2,                // dimensionality
+    unsigned int      // index type
+    >;
+
     // callbacks
     void odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg);
     void partial_trajectory_callback(const visualization_msgs::msg::Marker traj); // during the first lap we work with the partial trajectory published by the local planner
@@ -62,6 +70,8 @@ private:
     // methods
     void initialize();
     void load_parameters();
+    void load_trajectory(); 
+    size_t get_closest_point(const Eigen::Vector2f& odometry_pose, double radius);
     Eigen::Vector4f find_optimal_control_vector(double speed);
     double calculate_torque(double speed, double target_speed);    
 
@@ -87,7 +97,7 @@ private:
     std::vector<std::pair<double, std::vector<double>>> m_k_pair;
     std::vector<double> m_points_target_speed; // calculated offline on matlab always
     PointCloud m_cloud;
-    lqr::SplinePath m_spline;
+    std::unique_ptr<KDTreeType> m_kdtree;
     std::vector<double> m_u;
     std::vector<double> m_points_tangents;
     std::vector<double> m_points_radii;
@@ -95,7 +105,9 @@ private:
     bool m_is_loaded;
     bool m_is_DEBUG;
     bool m_is_constant_speed;
+    bool m_cloud_has_changed{false};
     double m_target_speed;
+    double m_param_search_radius;
     int m_trajectory_oversampling_factor;
     double m_ds;
     std::string m_csv_filename;
