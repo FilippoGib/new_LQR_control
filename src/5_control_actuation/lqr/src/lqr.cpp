@@ -66,9 +66,7 @@ PointCloud get_trajectory(const std::string& trajectory_csv)
     return cloud;
 }
 
-size_t LQR::get_closest_point(
-    const Eigen::Vector2f& odometry_pose,
-    double radius)
+size_t LQR::get_closest_point_from_KD_Tree(const Eigen::Vector2f& odometry_pose, double radius)
 {
     if (!m_kdtree) {
         throw std::runtime_error("KD‑tree not initialized");
@@ -109,7 +107,37 @@ size_t LQR::get_closest_point(
     return best;
 }
 
+size_t LQR::get_closest_point_along_S(const Eigen::Vector2f& odometry_pose, double window, double& out_S)
+{
+    // 1) Find S-range [S_prev – window, S_prev + window]
+    double lowS  = m_S_prev - window;
+    double highS = m_S_prev + window;
 
+    // 2) Binary-search in m_points_s (must be sorted ascending)
+    auto it_low  = std::lower_bound(m_points_s.begin(), m_points_s.end(), lowS);
+    auto it_high = std::upper_bound(m_points_s.begin(), m_points_s.end(), highS);
+    size_t idx_low  = std::distance(m_points_s.begin(), it_low);
+    size_t idx_high = std::distance(m_points_s.begin(), it_high);
+
+    if (idx_low >= m_cloud.pts.size() || idx_low >= idx_high)
+        throw std::runtime_error("No points in S-window");
+
+    // 3) Brute-force scan for the absolute closest in Euclidean space
+    double best_d2 = std::numeric_limits<double>::infinity();
+    size_t best_i  = idx_low;
+    for (size_t i = idx_low; i < idx_high; ++i) {
+        double dx = odometry_pose.x() - m_cloud.pts[i].x();
+        double dy = odometry_pose.y() - m_cloud.pts[i].y();
+        double d2 = dx*dx + dy*dy;
+        if (d2 < best_d2) {
+            best_d2 = d2;
+            best_i  = i;
+        }
+    }
+
+    out_S = m_points_s[best_i];
+    return best_i;
+}
 
 double points_distance(const Eigen::Vector2f &a, const Eigen::Vector2f &b) {
     double dx = a[0] - b[0];
@@ -169,6 +197,7 @@ double get_yaw(const nav_msgs::msg::Odometry::SharedPtr msg) {
 
 std::vector<double> get_csv_column(const std::string& trajectory_csv, int column)
 {
+    int number_of_tokens_I_was_not_able_to_convert_to_double = 0;
     std::vector<double> values;
     std::ifstream file(trajectory_csv);
     
@@ -189,7 +218,14 @@ std::vector<double> get_csv_column(const std::string& trajectory_csv, int column
                     double value = std::stod(token);
                     values.push_back(value);
                 } catch (const std::exception& e) {
-                    std::cerr << "Conversion error for token: " << token << "\n";
+                    if(number_of_tokens_I_was_not_able_to_convert_to_double == 0) // It's alright, It's the header
+                    {
+                        number_of_tokens_I_was_not_able_to_convert_to_double++;
+                    }
+                    else
+                    {
+                        std::cerr << "Conversion error for token: " << token << "\n";
+                    }
                 }
                 break; // We only need the specified column, so break out of the inner loop.
             }
@@ -206,7 +242,7 @@ std::tuple<double, Eigen::Vector2d> get_lateral_deviation_components(const doubl
     double Vy = msg->twist.twist.linear.y;
     double lateral_deviation_speed = Vy*std::cos(angular_dev) + Vx*std::sin(angular_dev); // this is the speed of the car in the direction of the tangent line
 
-    // Now reconstruct the perpendicular component into the original frame of reference
+    // Now reconstruct the perpendicular component into the original frame of reference in order to output it as a vector
     Eigen::Vector2d d_perp(-std::sin(closest_point_tangent), std::cos(closest_point_tangent));
     return {lateral_deviation_speed, lateral_deviation_speed * d_perp};
 }
@@ -287,6 +323,9 @@ void LQR::load_parameters()
     this->declare_parameter<double>("search_radius", 1);
     m_param_search_radius = this->get_parameter("search_radius").get_value<double>();
 
+    this->declare_parameter<double>("s_window", 5.0);
+    m_param_s_window = this->get_parameter("s_window").get_value<double>();
+
     // car physical parameters
     this->declare_parameter<std::vector<std::string>>("vectors_k", std::vector<std::string>{});
     m_raw_vectors_k = this->get_parameter("vectors_k").as_string_array();
@@ -327,20 +366,23 @@ void LQR::load_trajectory()
 {
     std::string package_share_directory = ament_index_cpp::get_package_share_directory("lqr");
     std::string trajectory_csv = m_csv_filename;
+
+    // Build pointcloud from waypoints
     m_cloud = get_trajectory(package_share_directory+trajectory_csv); 
 
+    // Build the KD-Tree once from pointcloud
     m_kdtree = std::make_unique<KDTreeType>(
             2, m_cloud, nanoflann::KDTreeSingleIndexAdaptorParams(10)
         );  
     m_kdtree->buildIndex();
     m_cloud_has_changed = false;
 
-    m_points_target_speed = get_csv_column(package_share_directory+trajectory_csv, 4); // The target speed is stored in the 4th column of the csv file
+    // Get correspoinding columns from the csv file, the second parameter of the function is the column number
+    m_points_s = get_csv_column(package_share_directory + trajectory_csv, 5);
+    m_points_target_speed = get_csv_column(package_share_directory+trajectory_csv, 4);
     m_points_tangents = get_csv_column(package_share_directory+trajectory_csv, 3); 
     m_points_radii = get_csv_column(package_share_directory+trajectory_csv, 2); 
-
 }
-
 
 void LQR::initialize()
 {
@@ -364,8 +406,6 @@ void LQR::initialize()
         m_debug_pub = this->create_publisher<nav_msgs::msg::Odometry>(m_debug_topic, qos_d);
         m_debug_odom_pub = this->create_publisher<nav_msgs::msg::Odometry>(m_debug_odom_topic, qos_d);
     }
-
-    m_is_loaded=false;   
     m_cumulative_error = 0.0;
 }
 
@@ -395,6 +435,7 @@ LQR::LQR() : Node("lqr_node")
             RCLCPP_INFO(this->get_logger(), "k%zu: %f, %f, %f, %f, %f ", i + 1, m_k_pair[i].first, m_k_pair[i].second[0], m_k_pair[i].second[1], m_k_pair[i].second[2], m_k_pair[i].second[3]);
         } else {
             RCLCPP_WARN(this->get_logger(), "k%zu: %f, each k vector MUST have EXACTLY 4 elements", i + 1, m_k_pair[i].first);
+            exit(1);
         }
     }
 }
@@ -407,21 +448,28 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     Eigen::Vector2f odometry_pose(msg->pose.pose.position.x, msg->pose.pose.position.y);
     Odometry odometry = {odometry_pose, get_yaw(msg)};
     
-    // if(!m_is_loaded && !m_is_first_lap) // if instead we are in the first lap the trajectory should come from the callback. We don't care about it for now
-    // {
-    //     // std::string package_share_directory = ament_index_cpp::get_package_share_directory("lqr");
-    //     // std::string trajectory_csv = m_csv_filename;
-
-    //     // m_cloud = get_trajectory(package_share_directory+trajectory_csv); 
-    // }    
-
     // Find closest point to trajectory using KD-Tree from NanoFLANN
     // Log to console how long it took to find the closest point
+    size_t closest_point_index;
+    double new_S;
+
     std::chrono::high_resolution_clock::time_point s = std::chrono::high_resolution_clock::now();
-    size_t closest_point_index = get_closest_point(odometry_pose, m_param_search_radius);
+
+    try // using binary search along S
+    {
+        closest_point_index = get_closest_point_along_S(odometry_pose, m_param_s_window, new_S);
+    }
+    catch(const std::exception& e) // fallback to KD_tree search if binary search fails OSS: this approach will now work for skidpad
+    {
+        closest_point_index = get_closest_point_from_KD_Tree(odometry_pose, m_param_search_radius);
+        new_S = m_points_s[closest_point_index];
+    }
+
     std::chrono::high_resolution_clock::time_point e = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> seconds = e - s;
     RCLCPP_INFO(this->get_logger(), "Closest point search took %.2f ms", seconds.count() * 1000);
+
+    m_S_prev = new_S; // update S of the car
 
     Eigen::Vector2f closest_point = m_cloud.pts[closest_point_index];
 
@@ -457,16 +505,6 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
             break;
         }
     }
-
-    // if (!m_is_loaded)
-    // {
-    //     // std::string package_share_directory = ament_index_cpp::get_package_share_directory("lqr");
-    //     // std::string trajectory_csv = m_csv_filename;
-    //     // m_points_target_speed = get_csv_column(package_share_directory+trajectory_csv, 4); // The target speed is stored in the 4th column of the csv file
-    //     // m_points_tangents = get_csv_column(package_share_directory+trajectory_csv, 3); 
-    //     // m_points_radii = get_csv_column(package_share_directory+trajectory_csv, 2); 
-    //     // m_is_loaded = true;
-    // }
 
     // if(m_is_DEBUG)
     // {

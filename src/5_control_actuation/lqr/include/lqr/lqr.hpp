@@ -20,7 +20,6 @@
 #include <eigen3/Eigen/Geometry>
 #include <vector>
 
-#include "spline/spline_path.hpp"
 #include "nanoflann/nanoflann.hpp"
 
 #define _USE_MATH_DEFINES
@@ -71,7 +70,8 @@ private:
     void initialize();
     void load_parameters();
     void load_trajectory(); 
-    size_t get_closest_point(const Eigen::Vector2f& odometry_pose, double radius);
+    size_t get_closest_point_from_KD_Tree(const Eigen::Vector2f& odometry_pose, double radius);
+    size_t get_closest_point_along_S(const Eigen::Vector2f& odometry_pose, double window, double& out_S);
     Eigen::Vector4f find_optimal_control_vector(double speed);
     double calculate_torque(double speed, double target_speed);    
 
@@ -101,6 +101,9 @@ private:
     std::vector<double> m_u;
     std::vector<double> m_points_tangents;
     std::vector<double> m_points_radii;
+    std::vector<double> m_points_s;
+    double m_S_prev; // previus iteration S
+    double m_param_s_window; // size of sliding window
     bool m_is_first_lap; // for now we statically decide if we want to use the partial trajectory or we want to use the global trajectory
     bool m_is_loaded;
     bool m_is_DEBUG;
