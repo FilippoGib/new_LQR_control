@@ -104,6 +104,7 @@ private:
     std::vector<double> m_points_s;
     double m_S_prev; // previus iteration S
     double m_param_s_window; // size of sliding window
+    double m_param_max_dist; // maximum distance at which a point is considered the closest
     bool m_is_first_lap; // for now we statically decide if we want to use the partial trajectory or we want to use the global trajectory
     bool m_is_loaded;
     bool m_is_DEBUG;

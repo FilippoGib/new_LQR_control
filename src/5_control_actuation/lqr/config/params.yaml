@@ -6,10 +6,11 @@ lqr_node:
         is_constant_speed: true
         target_speed: 5.0
         trajectory_oversampling_factor: 100
-        search_radius: 3.0 # will be squared
+        search_radius: 4.0 # will be squared
         s_window: 4.0
+        max_distance: 0.5
         # SUPPORT FILES
-        trajectory_filename: "/circuits/track.csv"
+        trajectory_filename: "/circuits/track_s.csv"
         odom_topic: "/simulation_state"
         control_topic: "/car_controls"
         debug_topic: "/debug/odometry"
@@ -28,7 +29,7 @@ lqr_node:
         PID_d:  0.0
         # CONTROL VECTORS 
         vectors_k:
-          - "5.00    2.3443    0.1378    1.8639    0.1094"
-          - "10.0    2.3443    0.1378    1.8639    0.1094"
-          - "15.0    2.3443    0.1378    1.8639    0.1094"
-          - "20.0    2.3443    0.1378    1.8639    0.1094"
+          - "5.00    1.3520    0.1217    1.7214    0.0970"
+          - "10.0    1.3520    0.1217    1.7214    0.0970"
+          - "15.0    1.3520    0.1217    1.7214    0.0970"
+          - "20.0    1.3520    0.1217    1.7214    0.0970"

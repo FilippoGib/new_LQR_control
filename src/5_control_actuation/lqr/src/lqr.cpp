@@ -109,20 +109,20 @@ size_t LQR::get_closest_point_from_KD_Tree(const Eigen::Vector2f& odometry_pose,
 
 size_t LQR::get_closest_point_along_S(const Eigen::Vector2f& odometry_pose, double window, double& out_S)
 {
-    // 1) Find S-range [S_prev – window, S_prev + window]
+    // Find S-range [S_prev – window, S_prev + window]
     double lowS  = m_S_prev - window;
     double highS = m_S_prev + window;
 
-    // 2) Binary-search in m_points_s (must be sorted ascending)
+    // Binary-search in m_points_s (must be sorted ascending)
     auto it_low  = std::lower_bound(m_points_s.begin(), m_points_s.end(), lowS);
     auto it_high = std::upper_bound(m_points_s.begin(), m_points_s.end(), highS);
     size_t idx_low  = std::distance(m_points_s.begin(), it_low);
     size_t idx_high = std::distance(m_points_s.begin(), it_high);
 
     if (idx_low >= m_cloud.pts.size() || idx_low >= idx_high)
-        throw std::runtime_error("No points in S-window");
+        throw std::runtime_error("No points in S-window\n");
 
-    // 3) Brute-force scan for the absolute closest in Euclidean space
+    // Brute-force scan for the absolute closest in Euclidean space
     double best_d2 = std::numeric_limits<double>::infinity();
     size_t best_i  = idx_low;
     for (size_t i = idx_low; i < idx_high; ++i) {
@@ -134,6 +134,9 @@ size_t LQR::get_closest_point_along_S(const Eigen::Vector2f& odometry_pose, doub
             best_i  = i;
         }
     }
+    
+    if(best_d2 >= m_param_max_dist)
+        throw std::runtime_error("Closest point is not close enough\n");
 
     out_S = m_points_s[best_i];
     return best_i;
@@ -326,6 +329,9 @@ void LQR::load_parameters()
     this->declare_parameter<double>("s_window", 5.0);
     m_param_s_window = this->get_parameter("s_window").get_value<double>();
 
+    this->declare_parameter<double>("max_distance", 1.0);
+    m_param_max_dist = this->get_parameter("max_distance").get_value<double>();
+
     // car physical parameters
     this->declare_parameter<std::vector<std::string>>("vectors_k", std::vector<std::string>{});
     m_raw_vectors_k = this->get_parameter("vectors_k").as_string_array();
@@ -463,6 +469,8 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     {
         closest_point_index = get_closest_point_from_KD_Tree(odometry_pose, m_param_search_radius);
         new_S = m_points_s[closest_point_index];
+        RCLCPP_INFO(this->get_logger(), "EXCEPTION CAUGHT: %s\n", e.what());
+        RCLCPP_INFO(this->get_logger(), "######################## USED KD-TREE ###########################");
     }
 
     std::chrono::high_resolution_clock::time_point e = std::chrono::high_resolution_clock::now();
@@ -558,7 +566,7 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     // Now we compute the feedforward term
     double delta_f = get_feedforward_term(K_3, m_mass, Vx, R_c, front_length, rear_length, C_alpha_rear, C_alpha_front);
     
-    steering = steering - delta_f; // this is my actual steering target at the wheel
+    steering = steering + delta_f; // this is my actual steering target at the wheel
 
     // NOTICE: the steering angle we just computed is the steering angle requested at the wheels. We need to actuate the steering wheel
     // How much do we have to turn the steering wheel to get the desired steering angle at the wheels?
@@ -599,7 +607,7 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
         RCLCPP_INFO(this->get_logger(), "Closest Point: x=%.2f, y=%.2f", closest_point[0], closest_point[1]);
         RCLCPP_INFO(this->get_logger(), "steering: %.4f, delta_f = %.4f", steering, delta_f);
         RCLCPP_INFO(this->get_logger(), "x: [%.2f,%.2f,%.2f,%.2f]", x[0],x[1],x[2],x[3]);
-        RCLCPP_INFO(this->get_logger(), "overall duration: %ld ns", duration);
+        RCLCPP_INFO(this->get_logger(), "overall duration: %.2f ms", duration / 1e6);
         // RCLCPP_INFO(this->get_logger(), "k: [%.2f,%.2f,%.2f,%.2f]", optimal_control_vector[0],optimal_control_vector[1],optimal_control_vector[2],optimal_control_vector[3]);
     }
 

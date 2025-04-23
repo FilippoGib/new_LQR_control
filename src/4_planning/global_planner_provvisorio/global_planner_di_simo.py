@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import math
 
-df = pd.read_csv('suca.csv')
+df = pd.read_csv('varano_x_y_r_v.csv')
 tck, u = scipy.interpolate.splprep(df[['x', 'y']].values.T, per=1, s=0.0)
 
 def dlength(s, tck):
@@ -29,16 +29,16 @@ ks = curvature(dxs, ddxs)
 ss = spline_ss * len_meters
 ts = dxs / np.linalg.norm(dxs, axis=0)
 
-phis = np.atan2(ts[1,:], ts[0,:])
+phis = np.arctan2(ts[1,:], ts[0,:])
 
 pd.DataFrame({
-  # "s": spline_ss,
   "x": xs[0,:],
   "y": xs[1,:],
   "r": 1/ks,
   "phi": phis,
-  "vx": 0.0
-}).to_csv('track.csv', index=False)
+  "vx": 0.0,
+  "s": spline_ss
+}).to_csv('track_s.csv', index=False)
 
 import matplotlib.pyplot as plt
 fig = plt.figure()
@@ -48,7 +48,7 @@ ax_xy.plot(df['x'], df['y'], color='orange')
 
 
 ax_k.plot(ss, phis)
-# ax_k.plot(ss, ks)
+ax_k.plot(ss, ks)
 
 
 plt.show()
