@@ -107,6 +107,62 @@ size_t LQR::get_closest_point_from_KD_Tree(const Eigen::Vector2f& odometry_pose,
     return best;
 }
 
+// size_t LQR::get_closest_point_along_S(const Eigen::Vector2f& odometry_pose, double window, double& out_S)
+// {
+//     size_t best_j = m_old_closest_point_index;
+//     double best_d2 = std::numeric_limits<double>::infinity();
+
+//     size_t j = m_old_closest_point_index;
+
+//     while(m_points_s[j] > m_points_s[m_old_closest_point_index] - window) // going backwards
+//     {
+//         RCLCPP_INFO(this-> get_logger(), "iteration: %zu, current s = %f, window lower bound = %f", j, m_points_s[j], m_points_s[m_old_closest_point_index] - window);
+//         double dx = odometry_pose.x() - m_cloud.pts[j].x();
+//         double dy = odometry_pose.y() - m_cloud.pts[j].y();
+//         double d2 = dx*dx + dy*dy;    
+//         if (d2 < best_d2) {
+//             best_d2 = d2;
+//             best_j  = j;
+//         }
+//         if(j > 0)
+//         {
+//             j = j - 1;
+//         }
+//         else
+//         {
+//             break;
+//         }
+//     }
+
+//     j = m_old_closest_point_index;
+
+//     while(m_points_s[j] < m_points_s[m_old_closest_point_index] + window) // going forward
+//     {
+//         RCLCPP_INFO(this-> get_logger(), "iteration: %zu, current s = %f, window upper bound = %f", j, m_points_s[j], m_points_s[m_old_closest_point_index] + window);
+//         double dx = odometry_pose.x() - m_cloud.pts[j].x();
+//         double dy = odometry_pose.y() - m_cloud.pts[j].y();
+//         double d2 = dx*dx + dy*dy;    
+//         if (d2 < best_d2) {
+//             best_d2 = d2;
+//             best_j  = j;
+//         }
+//         if(j + 1 < m_cloud.pts.size())
+//         {
+//             j = j + 1;
+//         }
+//         else
+//         {
+//             break;
+//         }
+//     }
+
+//     if(best_d2 >= m_param_max_dist)
+//         throw std::runtime_error("Closest point is not close enough\n");
+
+//     out_S = m_points_s[best_j];
+//     return best_j;
+// }
+
 size_t LQR::get_closest_point_along_S(const Eigen::Vector2f& odometry_pose, double window, double& out_S)
 {
     // Find S-range [S_prev – window, S_prev + window]
@@ -413,6 +469,7 @@ void LQR::initialize()
         m_debug_odom_pub = this->create_publisher<nav_msgs::msg::Odometry>(m_debug_odom_topic, qos_d);
     }
     m_cumulative_error = 0.0;
+    m_old_closest_point_index = 0;
 }
 
 
@@ -475,8 +532,9 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
 
     std::chrono::high_resolution_clock::time_point e = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> seconds = e - s;
-    RCLCPP_INFO(this->get_logger(), "Closest point search took %.2f ms", seconds.count() * 1000);
+    RCLCPP_INFO(this->get_logger(), "Closest point search took %.4f ms", seconds.count() * 1000);
 
+    m_old_closest_point_index = closest_point_index; // save old closest point
     m_S_prev = new_S; // update S of the car
 
     Eigen::Vector2f closest_point = m_cloud.pts[closest_point_index];
@@ -607,7 +665,7 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
         RCLCPP_INFO(this->get_logger(), "Closest Point: x=%.2f, y=%.2f", closest_point[0], closest_point[1]);
         RCLCPP_INFO(this->get_logger(), "steering: %.4f, delta_f = %.4f", steering, delta_f);
         RCLCPP_INFO(this->get_logger(), "x: [%.2f,%.2f,%.2f,%.2f]", x[0],x[1],x[2],x[3]);
-        RCLCPP_INFO(this->get_logger(), "overall duration: %.2f ms", duration / 1e6);
+        RCLCPP_INFO(this->get_logger(), "overall duration: %.4f ms", duration / 1e6);
         // RCLCPP_INFO(this->get_logger(), "k: [%.2f,%.2f,%.2f,%.2f]", optimal_control_vector[0],optimal_control_vector[1],optimal_control_vector[2],optimal_control_vector[3]);
     }
 
