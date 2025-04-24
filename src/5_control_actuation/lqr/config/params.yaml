@@ -4,7 +4,7 @@ lqr_node:
         is_debug_mode: true
         is_first_lap:  false
         is_constant_speed: true
-        target_speed: 9.0
+        target_speed: 12.0
         trajectory_oversampling_factor: 100
         search_radius: 4.0 # for KD-Tree, will be squared
         s_window: 0.005 # for sliding window search
@@ -24,7 +24,7 @@ lqr_node:
         C_alpha_rear: 1e4
         steering_ratio: 1.0
         # PID parameters
-        PID_p:  1.0
+        PID_p:  5.0
         PID_i:  0.0
         PID_d:  0.0
         # CONTROL VECTORS 
