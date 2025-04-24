@@ -566,7 +566,7 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     // Now we compute the feedforward term
     double delta_f = get_feedforward_term(K_3, m_mass, Vx, R_c, front_length, rear_length, C_alpha_rear, C_alpha_front);
     
-    steering = steering + delta_f; // this is my actual steering target at the wheel
+    steering = steering - delta_f; // this is my actual steering target at the wheel
 
     // NOTICE: the steering angle we just computed is the steering angle requested at the wheels. We need to actuate the steering wheel
     // How much do we have to turn the steering wheel to get the desired steering angle at the wheels?
