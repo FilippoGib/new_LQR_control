@@ -73,7 +73,7 @@ private:
     size_t get_closest_point_from_KD_Tree(const Eigen::Vector2f& odometry_pose, double radius);
     size_t get_closest_point_along_S(const Eigen::Vector2f& odometry_pose, double window, double& out_S);
     Eigen::Vector4f find_optimal_control_vector(double speed);
-    double calculate_torque(double speed, double target_speed);    
+    double calculate_torque(double speed, double target_speed, double dt);    
 
     // pubs and subs
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr m_odom_sub;
@@ -130,6 +130,8 @@ private:
     double m_i;
     double m_d;
     double m_cumulative_error;
+    double m_max_integral; // limits the cumulative error so that it never explodes
+    double m_dt;
 };
 
 #endif

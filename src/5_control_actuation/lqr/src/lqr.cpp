@@ -338,11 +338,19 @@ Eigen::Vector4f LQR::find_optimal_control_vector(double speed_in_module)
     return optimal_control_vector;
 }
 
-double LQR::calculate_torque(double speed_in_module, double target_speed)
+double LQR::calculate_torque(double speed_in_module, double target_speed, double dt)
 {
     double speed_difference = target_speed - speed_in_module;
-    m_cumulative_error += speed_difference;
-    return speed_difference * m_p + m_i * m_cumulative_error; // + m_d * (speed_difference - m_previous_speed_difference); lets just use a PI for now
+    m_cumulative_error += speed_difference * dt;
+
+    // clamping cumulaitve error to avoid nosense values
+    if (m_cumulative_error > m_max_integral) {
+        m_cumulative_error = m_max_integral;
+    } else if (m_cumulative_error < -m_max_integral) {
+        m_cumulative_error = -m_max_integral;
+    }
+
+    return speed_difference * m_p + m_i * m_cumulative_error;
 }
 
 void LQR::load_parameters()
@@ -422,6 +430,13 @@ void LQR::load_parameters()
 
     this->declare_parameter<double>("PID_d", 0.0);
     m_d = this->get_parameter("PID_d").get_value<double>();
+
+    this->declare_parameter<double>("max_integral", 0.0);
+    m_max_integral = this->get_parameter("max_integral").get_value<double>();
+
+    this->declare_parameter<double>("dt", 0.003);
+    m_dt = this->get_parameter("dt").get_value<double>();
+    
 }
 
 void LQR::load_trajectory()
@@ -646,7 +661,7 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
         m_cumulative_error = 0; // I don't want my integral term to accumulate when I am stationary eg. at the start of the mission
     }
 
-    double throttle = calculate_torque(speed_in_module, target_speed); // It is delegated to the simulator to map torque in [-1,1] 
+    double throttle = calculate_torque(speed_in_module, target_speed, m_dt); // It is delegated to the simulator to map torque in [-1,1] 
 
     // Now we have the steering and the throttle, we can create a message and publish it
     ackermann_msgs::msg::AckermannDriveStamped control_msg;
