@@ -4,7 +4,7 @@ lqr_node:
         is_debug_mode: true
         is_first_lap:  false
         is_constant_speed: true
-        target_speed: 7.0
+        target_speed: 6.0
         trajectory_oversampling_factor: 100
         search_radius: 4.0 # for KD-Tree, will be squared
         s_window: 0.005 # for sliding window search
@@ -28,12 +28,12 @@ lqr_node:
         PID_p:  5.0
         PID_i:  1.0
         PID_d:  0.0
-        max_integral: 100.0 # max value the intergral term can assume
+        max_integral: 500.0 # max value the intergral term can assume
         # CONTROL VECTORS 
         vectors_k:
-          - "5.00    1.9418    0.1614    1.9986    0.1321"
-          - "10.0    1.9418    0.1614    1.9986    0.1321"
-          - "15.0    1.9418    0.1614    1.9986    0.1321"
-          - "20.0    1.9418    0.1614    1.9986    0.1321"
+          - "5.00    0.9623    0.1363    2.0116    0.1780"
+          - "10.0    0.9623    0.1363    2.0116    0.1780"
+          - "15.0    0.9623    0.1363    2.0116    0.1780"
+          - "20.0    0.9623    0.1363    2.0116    0.1780"
 
           
