@@ -18,12 +18,12 @@ lqr_node:
         debug_odom_topic: "/debug/debby"
         partial_traj_topic: "/planning/centerline"
         # CAR PHYSICAL PARAMETERS
-        car_mass: 280.0
-        front_length: 0.8162
+        car_mass: 318.0
+        front_length: 0.8462
         rear_length: 0.7238
         C_alpha_front: 1e4
         C_alpha_rear: 1e4
-        steering_ratio: 1.0
+        steering_ratio: 1.0 # should be handled by acs node if using sim
         # PID parameters
         PID_p:  5.0
         PID_i:  1.0
@@ -31,9 +31,9 @@ lqr_node:
         max_integral: 500.0 # max value the intergral term can assume
         # CONTROL VECTORS 
         vectors_k:
-          - "5.00    0.9623    0.1363    2.0116    0.1780"
-          - "10.0    0.9623    0.1363    2.0116    0.1780"
-          - "15.0    0.9623    0.1363    2.0116    0.1780"
-          - "20.0    0.9623    0.1363    2.0116    0.1780"
+          - "5.00    0.9789    0.2883    1.9767    0.2912"
+          - "10.0    0.9789    0.2883    1.9767    0.2912"
+          - "15.0    0.9789    0.2883    1.9767    0.2912"
+          - "20.0    0.9789    0.2883    1.9767    0.2912"
 
           

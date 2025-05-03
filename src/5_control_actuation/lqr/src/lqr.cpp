@@ -309,7 +309,7 @@ std::tuple<double, Eigen::Vector2d> get_lateral_deviation_components(const doubl
 double get_feedforward_term(const double K_3, const double mass, const double long_speed, const double radius, const double frontal_lenght, const double rear_lenght, const double C_alpha_rear, const double C_alpha_front)
 {
     double df_c1 = (mass*std::pow(long_speed,2))/(radius*(rear_lenght+frontal_lenght));
-    double df_c2 = (frontal_lenght / (2*C_alpha_front))-(rear_lenght / (2*C_alpha_rear)) + (frontal_lenght / (2*C_alpha_rear))*K_3;
+    double df_c2 = (rear_lenght / (2*C_alpha_front))-(frontal_lenght / (2*C_alpha_rear)) + (frontal_lenght / (2*C_alpha_rear))*K_3;
     double df_c3 = (rear_lenght+frontal_lenght)/radius;
     double df_c4 = (rear_lenght/radius)*K_3;
     return df_c1*df_c2+df_c3-df_c4;
@@ -639,7 +639,7 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     // Now we compute the feedforward term
     double delta_f = get_feedforward_term(K_3, m_mass, Vx, R_c, front_length, rear_length, C_alpha_rear, C_alpha_front);
     
-    steering = steering - delta_f; // this is my actual steering target at the wheel
+    steering = steering + delta_f; // this is my actual steering target at the wheel
 
     // NOTICE: the steering angle we just computed is the steering angle requested at the wheels. We need to actuate the steering wheel
     // How much do we have to turn the steering wheel to get the desired steering angle at the wheels?
@@ -669,6 +669,7 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     control_msg.header.frame_id = "map"; 
     control_msg.drive.steering_angle = steering;
     control_msg.drive.speed = throttle;
+    control_msg.drive.acceleration = delta_f; // just for debug
     m_control_pub->publish(control_msg);
     
     auto end = std::chrono::high_resolution_clock::now();
@@ -691,6 +692,7 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
         debby.child_frame_id = "imu_link";
         debby.header.stamp = msg->header.stamp;
         debby.pose.pose.position.y = x[0]; // here we put the lateral deviation on the y axis
+        debby.pose.pose.position.x = delta_f; // dont judge me
         debby.twist.twist.linear.y = x[1]; // here we put the lateral deviation speed on the y axis
         debby.pose.pose.orientation.z = x[2]; // here we put the angular deviation 
         debby.twist.twist.angular.z = x[3]; // here we put the angular deviation speed
