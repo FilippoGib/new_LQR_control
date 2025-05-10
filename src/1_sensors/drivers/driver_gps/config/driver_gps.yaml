@@ -1,6 +1,0 @@
-/driver_gps_node:
-  ros__parameters:
-    generic:
-      gps_server_addr: "localhost"          
-      gps_server_port: "2947" 
-      enable_logging: true
