@@ -2,7 +2,6 @@ lqr_node:
     ros__parameters:
         # SETTINGS
         is_debug_mode: true
-        is_first_lap:  false
         is_constant_speed: true
         target_speed: 6.0
         trajectory_oversampling_factor: 100
@@ -10,6 +9,8 @@ lqr_node:
         s_window: 0.005 # for sliding window search
         max_distance: 2.00 # maximum distance a point can be to be considered the closest one to the odometry
         dt: 0.003 # single iteartion time
+        use_csv: true
+
         # SUPPORT FILES
         trajectory_filename: "/circuits/track_s.csv"
         odom_topic: "/simulation_state"
@@ -17,6 +18,8 @@ lqr_node:
         debug_topic: "/debug/odometry"
         debug_odom_topic: "/debug/debby"
         partial_traj_topic: "/planning/centerline"
+        global_traj_topic: "/planning/global_centerline"
+
         # CAR PHYSICAL PARAMETERS
         car_mass: 318.0
         front_length: 0.8462
@@ -24,11 +27,13 @@ lqr_node:
         C_alpha_front: 1e4
         C_alpha_rear: 1e4
         steering_ratio: 1.0 # should be handled by acs node if using sim
+
         # PID parameters
         PID_p:  5.0
         PID_i:  1.0
         PID_d:  0.0
         max_integral: 500.0 # max value the intergral term can assume
+
         # CONTROL VECTORS 
         vectors_k:
           - "5.00    0.9789    0.2883    1.9767    0.2912"

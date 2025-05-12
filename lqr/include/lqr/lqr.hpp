@@ -16,6 +16,8 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <ackermann_msgs/msg/ackermann_drive_stamped.hpp>
 #include <common_msgs/msg/trajectory_points.hpp>
+#include <common_msgs/msg/trajectory_point.hpp>
+
 
 #include <eigen3/Eigen/Geometry>
 #include <vector>
@@ -85,7 +87,7 @@ private:
     // N.B. this message is what the simulator needs, the actual message that will be used int the car might be different
     rclcpp::Publisher<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr m_control_pub; 
     
-    //topics
+    // topics
     std::string m_odom_topic;
     std::string m_control_topic;
     std::string m_partial_traj_topic;
@@ -96,23 +98,22 @@ private:
     // class members
     std::vector<std::string> m_raw_vectors_k;
     std::vector<std::pair<double, std::vector<double>>> m_k_pair;
-    std::vector<double> m_points_target_speed; // calculated offline on matlab always
+    common_msgs::msg::TrajectoryPoints m_trajectory_points;
     PointCloud m_cloud;
     std::unique_ptr<KDTreeType> m_kdtree;
-    std::vector<double> m_u;
-    std::vector<double> m_points_tangents;
-    std::vector<double> m_points_radii;
-    std::vector<double> m_points_s;
+
     double m_S_prev; // previus iteration S
     size_t m_old_closest_point_index; // previus iterazion closest point
     double m_param_s_window; // size of sliding window
     double m_param_max_dist; // maximum distance at which a point is considered the closest
-    bool m_is_first_lap; // tells us if we are using the partial trajectory from the local planner or the global trajectory from the global planner
+    bool m_is_first_lap{true}; // are we in the first lap? (at the start of the node always true)
+    bool m_use_partial_traj{true}; // should I use the partial trajectory? TRUE if(autocross || first lap of trackdrive)
+    bool m_use_global_traj{false}; // should I use the global trajectory? TRUE if(acceleration || skidpad || not first lap of trackdrive)
     bool m_is_loaded;
     bool m_is_DEBUG;
     bool m_is_constant_speed;
     bool m_cloud_has_changed{false};
-    bool use_csv{false};
+    bool m_use_csv;
     double m_target_speed;
     double m_param_search_radius;
     int m_trajectory_oversampling_factor;
