@@ -107,62 +107,6 @@ size_t LQR::get_closest_point_from_KD_Tree(const Eigen::Vector2f& odometry_pose,
     return best;
 }
 
-// size_t LQR::get_closest_point_along_S(const Eigen::Vector2f& odometry_pose, double window, double& out_S)
-// {
-//     size_t best_j = m_old_closest_point_index;
-//     double best_d2 = std::numeric_limits<double>::infinity();
-
-//     size_t j = m_old_closest_point_index;
-
-//     while(m_points_s[j] > m_points_s[m_old_closest_point_index] - window) // going backwards
-//     {
-//         RCLCPP_INFO(this-> get_logger(), "iteration: %zu, current s = %f, window lower bound = %f", j, m_points_s[j], m_points_s[m_old_closest_point_index] - window);
-//         double dx = odometry_pose.x() - m_cloud.pts[j].x();
-//         double dy = odometry_pose.y() - m_cloud.pts[j].y();
-//         double d2 = dx*dx + dy*dy;    
-//         if (d2 < best_d2) {
-//             best_d2 = d2;
-//             best_j  = j;
-//         }
-//         if(j > 0)
-//         {
-//             j = j - 1;
-//         }
-//         else
-//         {
-//             break;
-//         }
-//     }
-
-//     j = m_old_closest_point_index;
-
-//     while(m_points_s[j] < m_points_s[m_old_closest_point_index] + window) // going forward
-//     {
-//         RCLCPP_INFO(this-> get_logger(), "iteration: %zu, current s = %f, window upper bound = %f", j, m_points_s[j], m_points_s[m_old_closest_point_index] + window);
-//         double dx = odometry_pose.x() - m_cloud.pts[j].x();
-//         double dy = odometry_pose.y() - m_cloud.pts[j].y();
-//         double d2 = dx*dx + dy*dy;    
-//         if (d2 < best_d2) {
-//             best_d2 = d2;
-//             best_j  = j;
-//         }
-//         if(j + 1 < m_cloud.pts.size())
-//         {
-//             j = j + 1;
-//         }
-//         else
-//         {
-//             break;
-//         }
-//     }
-
-//     if(best_d2 >= m_param_max_dist)
-//         throw std::runtime_error("Closest point is not close enough\n");
-
-//     out_S = m_points_s[best_j];
-//     return best_j;
-// }
-
 size_t LQR::get_closest_point_along_S(const Eigen::Vector2f& odometry_pose, double window, double& out_S)
 {
     // Find S-range [S_prev – window, S_prev + window]
@@ -365,6 +309,9 @@ void LQR::load_parameters()
     this->declare_parameter<std::string>("partial_traj_topic", "");
     m_partial_traj_topic = this->get_parameter("partial_traj_topic").get_value<std::string>();
 
+    this->declare_parameter<std::string>("global_traj_topic", "");
+    m_global_traj_topic = this->get_parameter("global_traj_topic").get_value<std::string>();
+
     this->declare_parameter<std::string>("debug_topic", "");
     m_debug_topic = this->get_parameter("debug_topic").get_value<std::string>();
 
@@ -474,7 +421,8 @@ void LQR::initialize()
 
     // Initialize pubs and subs
     m_odom_sub = this->create_subscription<nav_msgs::msg::Odometry>(m_odom_topic, qos_rel, std::bind(&LQR::odometry_callback, this, std::placeholders::_1));
-    m_partial_traj_sub = this->create_subscription<visualization_msgs::msg::Marker>(m_partial_traj_topic, qos_rel, std::bind(&LQR::partial_trajectory_callback, this, std::placeholders::_1));
+    m_partial_traj_sub = this->create_subscription<common_msgs::msg::TrajectoryPoints>(m_partial_traj_topic, qos_rel, std::bind(&LQR::partial_trajectory_callback, this, std::placeholders::_1));
+    m_global_traj_sub = this->create_subscription<common_msgs::msg::TrajectoryPoints>(m_global_traj_topic, qos_rel, std::bind(&LQR::global_trajectory_callback, this, std::placeholders::_1));
     m_control_pub = this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>(m_control_topic, qos_rel);
 
     if(m_is_DEBUG){
@@ -675,7 +623,8 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
-    if(m_is_DEBUG){
+    if(m_is_DEBUG)
+    {
         RCLCPP_INFO(this->get_logger(), "odometry_pose: x=%.2f, y=%.2f", odometry_pose[0], odometry_pose[1]);
         RCLCPP_INFO(this->get_logger(), "yaw: %.2f", odometry.yaw);
         RCLCPP_INFO(this->get_logger(), "Closest Point: x=%.2f, y=%.2f", closest_point[0], closest_point[1]);
@@ -710,9 +659,9 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     }
 }
 
-void LQR::partial_trajectory_callback(const visualization_msgs::msg::Marker traj)
+void LQR::partial_trajectory_callback(const common_msgs::msg::TrajectoryPoints traj)
 {
-    if(!m_is_first_lap) // only execute this if we are in the first lap
+    if(!m_is_first_lap || use_csv) // if we are not in the first lap anymore or we are using the trajectory from csv do nothing
     {
         return;
     }
@@ -722,7 +671,10 @@ void LQR::partial_trajectory_callback(const visualization_msgs::msg::Marker traj
     return;
 }
 
-void LQR::global_trajectory_callback()
+void LQR::global_trajectory_callback(const common_msgs::msg::TrajectoryPoints traj)
 {
-    return;
+    if(m_is_first_lap || use_csv) // if we are still in the first lap or we are using the trajectory from csv do nothing
+    {
+        return;
+    }
 }

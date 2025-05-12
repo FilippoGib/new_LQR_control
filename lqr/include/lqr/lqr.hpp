@@ -15,7 +15,7 @@
 
 #include <nav_msgs/msg/odometry.hpp>
 #include <ackermann_msgs/msg/ackermann_drive_stamped.hpp>
-#include <visualization_msgs/msg/marker.hpp>
+#include <common_msgs/msg/trajectory_points.hpp>
 
 #include <eigen3/Eigen/Geometry>
 #include <vector>
@@ -63,8 +63,8 @@ private:
 
     // callbacks
     void odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg);
-    void partial_trajectory_callback(const visualization_msgs::msg::Marker traj); // during the first lap we work with the partial trajectory published by the local planner
-    void global_trajectory_callback(); // same as what partial_trajectory_callback does but is subscribed to a different topic
+    void partial_trajectory_callback(const common_msgs::msg::TrajectoryPoints traj); // during the first lap we work with the partial trajectory published by the local planner
+    void global_trajectory_callback(const common_msgs::msg::TrajectoryPoints traj); // same as what partial_trajectory_callback does but is subscribed to a different topic
 
     // methods
     void initialize();
@@ -77,8 +77,8 @@ private:
 
     // pubs and subs
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr m_odom_sub;
-    rclcpp::Subscription<visualization_msgs::msg::Marker>::SharedPtr m_partial_traj_sub; // we will use it in the first_lap mode
-    rclcpp::Subscription<visualization_msgs::msg::Marker>::SharedPtr m_global_traj_sub; // get the full trajectory once at the start of the second lap
+    rclcpp::Subscription<common_msgs::msg::TrajectoryPoints>::SharedPtr m_partial_traj_sub; // we will use it in the first_lap mode
+    rclcpp::Subscription<common_msgs::msg::TrajectoryPoints>::SharedPtr m_global_traj_sub; // get the full trajectory once at the start of the second lap
 
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr m_debug_pub; // for visualization
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr m_debug_odom_pub; // actual state vector
@@ -89,6 +89,7 @@ private:
     std::string m_odom_topic;
     std::string m_control_topic;
     std::string m_partial_traj_topic;
+    std::string m_global_traj_topic;
     std::string m_debug_topic;
     std::string m_debug_odom_topic;
    
@@ -106,11 +107,12 @@ private:
     size_t m_old_closest_point_index; // previus iterazion closest point
     double m_param_s_window; // size of sliding window
     double m_param_max_dist; // maximum distance at which a point is considered the closest
-    bool m_is_first_lap; // for now we statically decide if we want to use the partial trajectory or we want to use the global trajectory
+    bool m_is_first_lap; // tells us if we are using the partial trajectory from the local planner or the global trajectory from the global planner
     bool m_is_loaded;
     bool m_is_DEBUG;
     bool m_is_constant_speed;
     bool m_cloud_has_changed{false};
+    bool use_csv{false};
     double m_target_speed;
     double m_param_search_radius;
     int m_trajectory_oversampling_factor;
