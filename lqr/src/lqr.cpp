@@ -67,20 +67,24 @@ std::vector<Eigen::Vector2f> get_csv_trajectory(const std::string& trajectory_cs
     return ret;
 }
 
+void LQR::initialize_kdtree()
+{
+    m_kdtree.reset();  // destroy old tree safely
+
+
+    m_kdtree = std::make_unique<KDTreeType>(
+        2, m_cloud, nanoflann::KDTreeSingleIndexAdaptorParams(10)
+    );
+
+    m_kdtree->buildIndex();
+
+    RCLCPP_INFO(this->get_logger(), "KDTREE INITIALIZED");
+}
+
 size_t LQR::get_closest_point_from_KD_Tree(const Eigen::Vector2f& odometry_pose, double radius)
 {
     if (!m_kdtree) {
         throw std::runtime_error("KD‑tree not initialized");
-    }
-
-    // if the cloud has been updated elsewhere, rebuild:
-    if (m_cloud_has_changed) {
-        m_kdtree->~KDTreeType();  // destroy old tree
-        m_kdtree = std::make_unique<KDTreeType>(
-            2, m_cloud, nanoflann::KDTreeSingleIndexAdaptorParams(10)
-        );
-        m_kdtree->buildIndex();
-        m_cloud_has_changed = false;
     }
 
     double query_pt[2] = { odometry_pose.x(), odometry_pose.y() };
@@ -108,7 +112,7 @@ size_t LQR::get_closest_point_from_KD_Tree(const Eigen::Vector2f& odometry_pose,
     return best;
 }
 
-size_t LQR::get_closest_point_along_S(const Eigen::Vector2f& odometry_pose, double window, double& out_S)
+size_t LQR::get_closest_point_along_S(const Eigen::Vector2f& odometry_pose, double window)
 {
     // Find S-range [S_prev – window, S_prev + window]
     double lowS  = m_S_prev - window;
@@ -157,7 +161,6 @@ size_t LQR::get_closest_point_along_S(const Eigen::Vector2f& odometry_pose, doub
     if(best_d2 >= m_param_max_dist)
         throw std::runtime_error("Closest point is not close enough\n");
 
-    out_S = m_trajectory_points.points[best_i].s;
     return best_i;
 }
 
@@ -338,9 +341,6 @@ void LQR::load_parameters()
     m_debug_odom_topic = this->get_parameter("debug_odom_topic").get_value<std::string>();
 
     // settings
-    this->declare_parameter<bool>("is_first_lap", false);
-    m_is_first_lap = this->get_parameter("is_first_lap").get_value<bool>();
-
     this->declare_parameter<bool>("is_constant_speed", true);
     m_is_constant_speed = this->get_parameter("is_constant_speed").get_value<bool>();
 
@@ -364,6 +364,9 @@ void LQR::load_parameters()
 
     this->declare_parameter<bool>("use_csv", false);
     m_use_csv = this->get_parameter("use_csv").get_value<bool>();
+
+    this->declare_parameter<int>("double_check", 100);
+    m_double_check = this->get_parameter("double_check").get_value<int>();
 
     // car physical parameters
     this->declare_parameter<std::vector<std::string>>("vectors_k", std::vector<std::string>{});
@@ -470,7 +473,6 @@ void LQR::initialize()
     m_old_closest_point_index = 0;
 }
 
-
 LQR::LQR() : Node("lqr_node") 
 {
     this->initialize(); // initialize pubs and subs and load params
@@ -481,8 +483,11 @@ LQR::LQR() : Node("lqr_node")
         RCLCPP_INFO(this->get_logger(), "USING CSV");
         this->load_trajectory();
         RCLCPP_INFO(this->get_logger(), "TRAJECTORY IS LOADED");
+    } // else the trajectory will be acquired by the callbacks
+    else 
+    {
+        RCLCPP_INFO(this->get_logger(), "WAITING FOR TRAJECTORY FROM CALLBACK");
     }
-
     // load the control vectors paired with the respective velocity
     for (const auto& vec_str : m_raw_vectors_k) {
         std::stringstream ss(vec_str);
@@ -516,18 +521,17 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     Eigen::Vector2f odometry_pose(msg->pose.pose.position.x, msg->pose.pose.position.y);
     Odometry odometry = {odometry_pose, get_yaw(msg)};
     
-    // Find closest point to trajectory using KD-Tree from NanoFLANN
-    // Log to console how long it took to find the closest point
     size_t closest_point_index;
     double new_S;
 
     std::chrono::high_resolution_clock::time_point s = std::chrono::high_resolution_clock::now();
     // if I am not using the partial traj I can make the search along S and fallback to kd-tree
-    if(m_use_global_traj)
+    if(m_use_global_traj || m_use_csv)
     {
         try // using binary search along S
         {
-            closest_point_index = get_closest_point_along_S(odometry_pose, m_param_s_window, new_S);
+            closest_point_index = get_closest_point_along_S(odometry_pose, m_param_s_window);
+            new_S = m_trajectory_points.points[closest_point_index].s;
         }
         catch(const std::exception& e) // fallback to KD_tree search if binary search fails OSS: this approach will now work for skidpad
         {
@@ -543,6 +547,11 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
         new_S = m_trajectory_points.points[closest_point_index].s;
         RCLCPP_INFO(this->get_logger(), "######################## USED KD-TREE ###########################");
     }
+    else 
+    {
+        RCLCPP_ERROR(this->get_logger(), "No trajectory available, please provide a trajectory to the LQR node");
+        return;
+    }
 
     std::chrono::high_resolution_clock::time_point e = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> seconds = e - s;
@@ -556,9 +565,12 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     // Calculate lateral deviation as distance between two points just to check if the closest point is correct
     double lateral_deviation = points_distance(odometry_pose, closest_point);
 
+    int i = 0;
+
     // I have found the closest point on the trajectory to the odometry pose but I don't trust the result so I check if the previous or next point are closer to the odometry
-    while(1)
+    while(i < m_double_check) 
     {
+        i++;
         if(closest_point_index > 0 && closest_point_index < m_cloud.pts.size() - 1)
         {
             double previuous_point_lateral_deviation = points_distance(odometry_pose, m_cloud.pts[closest_point_index - 1]);
@@ -710,48 +722,63 @@ void LQR::odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
     }
 }
 
-void LQR::partial_trajectory_callback(const common_msgs::msg::TrajectoryPoints traj)
+void LQR::partial_trajectory_callback(std::shared_ptr<const common_msgs::msg::TrajectoryPoints> traj)
 {
     if(m_use_csv)
     {
         return;
     }
 
-    RCLCPP_INFO(this->get_logger(), "Partial trajectory callback entered");
+    RCLCPP_INFO(this->get_logger(), "PARTIAL TRAJECTORY CALLBACK ENTERED. NUMBER OF POINTS: %zu", traj->points.size());
+    if(traj->points.empty())
+    {
+        RCLCPP_ERROR(this->get_logger(), "Received empty trajectory, please provide a valid trajectory");
+        return;
+    }
+
     m_use_partial_traj = true;
     m_use_global_traj = false;
 
-    m_trajectory_points = traj;
+    m_trajectory_points.points = traj->points;
+
     m_cloud.pts.clear();
     std::vector<Eigen::Vector2f> points;
-    for (size_t i = 0; i < traj.points.size(); ++i) {
-        points.push_back({traj.points[i].pose.x, traj.points[i].pose.y});
+    for (size_t i = 0; i < traj->points.size(); ++i) {
+        m_cloud.pts.push_back({traj->points[i].pose.x, traj->points[i].pose.y});
     }
-    m_cloud.pts = points;
-    m_cloud_has_changed = true;
+
+    initialize_kdtree();
 
     return;
 }
 
-void LQR::global_trajectory_callback(const common_msgs::msg::TrajectoryPoints traj)
+void LQR::global_trajectory_callback(std::shared_ptr<const common_msgs::msg::TrajectoryPoints> traj)
 {
     if(m_use_csv)
     {
         return;
     }
 
-    RCLCPP_INFO(this->get_logger(), "Global trajectory callback entered");
+    RCLCPP_INFO(this->get_logger(), "GLOBAL TRAJECTORY CALLBACK ENTERED. NUMBER OF POINTS: %zu", traj->points.size());
+
+    if(traj->points.empty())
+    {
+        RCLCPP_ERROR(this->get_logger(), "Received empty trajectory, please provide a valid trajectory");
+        return;
+    }
+
     m_use_partial_traj = false;
     m_use_global_traj = true;
 
-    m_trajectory_points = traj;
+    m_trajectory_points.points = traj->points;
+
     m_cloud.pts.clear();
     std::vector<Eigen::Vector2f> points;
-    for (size_t i = 0; i < traj.points.size(); ++i) {
-        points.push_back({traj.points[i].pose.x, traj.points[i].pose.y});
-    }
-    m_cloud.pts = points;
-    m_cloud_has_changed = true;
+    for (size_t i = 0; i < traj->points.size(); ++i) {
+        m_cloud.pts.push_back({traj->points[i].pose.x, traj->points[i].pose.y});
+    } 
+
+    initialize_kdtree();
 
     return;
 }

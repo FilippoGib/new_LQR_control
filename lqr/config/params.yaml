@@ -3,16 +3,17 @@ lqr_node:
         # SETTINGS
         is_debug_mode: true
         is_constant_speed: true
-        target_speed: 6.0
+        target_speed: 7.0
         trajectory_oversampling_factor: 100
         search_radius: 4.0 # for KD-Tree, will be squared
         s_window: 0.005 # for sliding window search
-        max_distance: 2.00 # maximum distance a point can be to be considered the closest one to the odometry
+        max_distance: 5.00 # maximum distance a point can be to be considered the closest one to the odometry
         dt: 0.003 # single iteartion time
-        use_csv: true
+        double_check: 100 # number of iterations to double check the closest point
+        use_csv: false
 
         # SUPPORT FILES
-        trajectory_filename: "/circuits/track_s.csv"
+        trajectory_filename: "/circuits/track_output.csv"
         odom_topic: "/simulation_state"
         control_topic: "/car_controls"
         debug_topic: "/debug/odometry"
@@ -36,9 +37,9 @@ lqr_node:
 
         # CONTROL VECTORS 
         vectors_k:
-          - "5.00    0.9789    0.2883    1.9767    0.2912"
-          - "10.0    0.9789    0.2883    1.9767    0.2912"
-          - "15.0    0.9789    0.2883    1.9767    0.2912"
-          - "20.0    0.9789    0.2883    1.9767    0.2912"
+          - "5.00    1.3818    0.1010    1.7959    0.0948"
+          - "10.0    1.3818    0.1010    1.7959    0.0948"
+          - "15.0    1.3818    0.1010    1.7959    0.0948"
+          - "20.0    1.3818    0.1010    1.7959    0.0948"
 
           

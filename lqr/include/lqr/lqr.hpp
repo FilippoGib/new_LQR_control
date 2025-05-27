@@ -65,15 +65,16 @@ private:
 
     // callbacks
     void odometry_callback(const nav_msgs::msg::Odometry::SharedPtr msg);
-    void partial_trajectory_callback(const common_msgs::msg::TrajectoryPoints traj); // during the first lap we work with the partial trajectory published by the local planner
-    void global_trajectory_callback(const common_msgs::msg::TrajectoryPoints traj); // same as what partial_trajectory_callback does but is subscribed to a different topic
+    void partial_trajectory_callback(std::shared_ptr<const common_msgs::msg::TrajectoryPoints> traj); // during the first lap we work with the partial trajectory published by the local planner
+    void global_trajectory_callback(std::shared_ptr<const common_msgs::msg::TrajectoryPoints> traj); // same as what partial_trajectory_callback does but is subscribed to a different topic
 
     // methods
     void initialize();
     void load_parameters();
     void load_trajectory(); 
+    void initialize_kdtree();
     size_t get_closest_point_from_KD_Tree(const Eigen::Vector2f& odometry_pose, double radius);
-    size_t get_closest_point_along_S(const Eigen::Vector2f& odometry_pose, double window, double& out_S);
+    size_t get_closest_point_along_S(const Eigen::Vector2f& odometry_pose, double window);
     Eigen::Vector4f find_optimal_control_vector(double speed);
     double calculate_torque(double speed, double target_speed, double dt);    
 
@@ -106,7 +107,6 @@ private:
     size_t m_old_closest_point_index; // previus iterazion closest point
     double m_param_s_window; // size of sliding window
     double m_param_max_dist; // maximum distance at which a point is considered the closest
-    bool m_is_first_lap{true}; // are we in the first lap? (at the start of the node always true)
     bool m_use_partial_traj{true}; // should I use the partial trajectory? TRUE if(autocross || first lap of trackdrive)
     bool m_use_global_traj{false}; // should I use the global trajectory? TRUE if(acceleration || skidpad || not first lap of trackdrive)
     bool m_is_loaded;
@@ -117,6 +117,7 @@ private:
     double m_target_speed;
     double m_param_search_radius;
     int m_trajectory_oversampling_factor;
+    int m_double_check;
     double m_ds;
     std::string m_csv_filename;
 
