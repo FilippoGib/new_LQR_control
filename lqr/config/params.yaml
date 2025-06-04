@@ -10,15 +10,15 @@ lqr_node:
         max_distance: 5.00 # maximum distance a point can be to be considered the closest one to the odometry
         dt: 0.003 # single iteartion time
         double_check: 100 # number of iterations to double check the closest point
-        use_csv: false
+        use_csv: true
 
         # SUPPORT FILES
-        trajectory_filename: "/circuits/track_output.csv"
-        odom_topic: "/simulation_state"
-        control_topic: "/car_controls"
+        trajectory_filename: "/circuits/varano_s.csv"
+        odom_topic: "/Odometry"
+        control_topic: "/drive_parameters"
         debug_topic: "/debug/odometry"
         debug_odom_topic: "/debug/debby"
-        partial_traj_topic: "/planning/centerline"
+        partial_traj_topic: "/planning/centerline_enhanced"
         global_traj_topic: "/planning/global_centerline"
 
         # CAR PHYSICAL PARAMETERS
